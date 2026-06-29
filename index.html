@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cardinal Pricer — T. Byrd's Heating and Air</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #C41E3A;
+      --red-dark: #9B1630;
+      --red-light: #E8304D;
+      --navy: #0D1520;
+      --navy-mid: #162032;
+      --card: #1C2B3F;
+      --card-light: #243347;
+      --text: #EBF0F7;
+      --text-muted: #7A93B0;
+      --text-dim: #4A6280;
+      --border: #2A3D54;
+      --green: #27AE60;
+      --green-light: #2ECC71;
+      --orange: #E67E22;
+      --gold: #F1C40F;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--navy);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .screen.active { display: flex; }
+
+    /* HEADER */
+    .app-header {
+      background: var(--navy-mid);
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .company-name { font-size: 15px; font-weight: 700; }
+    .header-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .cardinal-dot { width: 10px; height: 10px; background: var(--red); border-radius: 50%; margin-top: 4px; }
+
+    /* BOTTOM NAV */
+    .bottom-nav { display: flex; background: var(--navy-mid); border-top: 1px solid var(--border); flex-shrink: 0; }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 10px 4px 12px; cursor: pointer; gap: 4px;
+      border: none; background: none; color: var(--text-muted); font-size: 10px; transition: color .15s;
+    }
+    .nav-item.active { color: var(--red); }
+    .nav-item svg { width: 22px; height: 22px; }
+
+    /* SCROLL */
+    .scroll-content {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 16px; padding-bottom: 24px;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 16px; margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;
+    }
+
+    /* INPUTS */
+    .field-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%; background: var(--navy-mid); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 12px; color: var(--text);
+      font-size: 15px; outline: none; -webkit-appearance: none; transition: border-color .15s;
+    }
+    input:focus, select:focus { border-color: var(--red); }
+    .field-group { margin-bottom: 14px; }
+
+    /* PRICE INPUT */
+    .price-input-wrap {
+      display: flex; align-items: center; background: var(--navy-mid);
+      border: 2px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0 12px; transition: border-color .15s;
+    }
+    .price-input-wrap:focus-within { border-color: var(--red); }
+    .price-input-wrap .currency { font-size: 20px; color: var(--text-muted); margin-right: 6px; }
+    .price-input-wrap input {
+      background: none; border: none; padding: 14px 0;
+      font-size: 28px; font-weight: 700; color: var(--text); flex: 1;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px 20px; border-radius: var(--radius-sm); font-size: 15px;
+      font-weight: 600; border: none; cursor: pointer; transition: opacity .15s, transform .1s;
+      width: 100%; text-align: center;
+    }
+    .btn:active { transform: scale(.97); opacity: .9; }
+    .btn-primary { background: var(--red); color: white; }
+    .btn-secondary { background: var(--card-light); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost { background: none; color: var(--text-muted); border: 1.5px solid var(--border); }
+    .btn-green { background: var(--green); color: white; }
+    .btn-sm { padding: 9px 16px; font-size: 13px; }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+
+    /* PILLS / MARGIN GRID */
+    .margin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .margin-btn {
+      padding: 10px 4px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+      border: 1.5px solid var(--border); background: var(--navy-mid); color: var(--text-muted);
+      cursor: pointer; text-align: center; transition: all .15s;
+    }
+    .margin-btn.active { background: var(--red); border-color: var(--red); color: white; }
+
+    /* CATEGORY CHIPS */
+    .cat-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .cat-row::-webkit-scrollbar { display: none; }
+    .cat-chip {
+      white-space: nowrap; padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 600;
+      border: 1.5px solid var(--border); background: var(--navy-mid); color: var(--text-muted);
+      cursor: pointer; flex-shrink: 0; transition: all .15s;
+    }
+    .cat-chip.active { background: var(--red); border-color: var(--red); color: white; }
+
+    /* STAT GRID */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .stat-box {
+      background: var(--navy-mid); border-radius: var(--radius-sm);
+      padding: 14px; border: 1px solid var(--border);
+    }
+    .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 6px; }
+    .stat-val { font-size: 22px; font-weight: 800; color: var(--text); }
+    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* RESULT BOX */
+    .result-box {
+      background: var(--navy-mid); border-radius: var(--radius);
+      border: 2px solid var(--red); padding: 20px; text-align: center; margin: 12px 0;
+    }
+    .result-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 8px; }
+    .result-price { font-size: 48px; font-weight: 900; color: var(--text); letter-spacing: -.02em; }
+    .result-tags { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .result-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(39,174,96,.15); color: var(--green-light);
+      border-radius: 99px; padding: 5px 14px; font-size: 13px; font-weight: 600;
+    }
+
+    /* BREAKDOWN */
+    .breakdown-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid rgba(42,61,84,.5); font-size: 13px;
+    }
+    .breakdown-row:last-child { border-bottom: none; }
+    .br-label { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .br-val { font-weight: 600; }
+    .br-tag {
+      font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;
+      background: rgba(122,147,176,.1); color: var(--text-muted);
+    }
+    .br-tag.v { background: rgba(196,30,58,.1); color: var(--red-light); }
+
+    /* TOGGLE */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-title { font-size: 14px; font-weight: 500; }
+    .toggle-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .toggle {
+      width: 44px; height: 26px; background: var(--border); border-radius: 99px;
+      position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--red); }
+    .toggle::after {
+      content: ''; position: absolute; width: 20px; height: 20px; background: white;
+      border-radius: 50%; top: 3px; left: 3px; transition: transform .2s;
+    }
+    .toggle.on::after { transform: translateX(18px); }
+
+    /* LIST ITEMS */
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .li-main { font-size: 14px; font-weight: 600; }
+    .li-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .li-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
+    .li-val { font-size: 15px; font-weight: 700; }
+    .li-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 99px;
+      font-size: 11px; font-weight: 600;
+    }
+    .li-badge.quoted { background: rgba(241,196,15,.15); color: var(--gold); }
+    .li-badge.sold { background: rgba(39,174,96,.15); color: var(--green-light); }
+    .li-badge.completed { background: rgba(122,147,176,.15); color: var(--text-muted); }
+
+    /* GP BAR */
+    .gp-bar-wrap { background: var(--navy); border-radius: 99px; height: 8px; overflow: hidden; margin: 12px 0 6px; }
+    .gp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-light)); border-radius: 99px; transition: width .5s ease; }
+    .gp-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); }
+
+    /* GBB TABS */
+    .gbb-tabs { display: flex; margin-bottom: 16px; border-radius: var(--radius-sm); overflow: hidden; border: 1.5px solid var(--border); }
+    .gbb-tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-muted); background: var(--navy-mid); cursor: pointer; border: none; transition: all .15s; }
+    .gbb-tab.active { background: var(--red); color: white; }
+
+    /* STICKY BAR */
+    .sticky-bar {
+      background: var(--navy-mid); border-top: 2px solid var(--border);
+      padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .sticky-label { font-size: 11px; color: var(--text-muted); }
+    .sticky-val { font-size: 20px; font-weight: 800; }
+    .sticky-pct { font-size: 13px; color: var(--green-light); font-weight: 600; }
+
+    /* SETTINGS */
+    .settings-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .sr-label { font-size: 14px; font-weight: 500; }
+    .sr-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .settings-row input { width: auto; max-width: 110px; text-align: right; padding: 7px 10px; font-size: 14px; }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+    .section-hdr { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); padding: 4px 0 8px; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .5; }
+    .empty-state h3 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card-light); color: var(--text); border: 1px solid var(--border);
+      padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 600;
+      opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
+      white-space: nowrap; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* BACK */
+    .back-btn {
+      display: flex; align-items: center; gap: 6px; font-size: 14px;
+      color: var(--red); font-weight: 500; background: none; border: none;
+      cursor: pointer; padding: 0; margin-bottom: 14px;
+    }
+
+    /* PIN SCREEN */
+    #screen-pin {
+      background: var(--navy); align-items: center; justify-content: center;
+    }
+    .pin-logo { text-align: center; margin-bottom: 36px; }
+    .bird-icon {
+      width: 72px; height: 72px; background: var(--red); border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px; font-size: 38px;
+    }
+    .pin-logo h1 { font-size: 26px; font-weight: 900; letter-spacing: -.02em; }
+    .pin-logo .pin-company { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .pin-dots { display: flex; gap: 16px; justify-content: center; margin-bottom: 32px; }
+    .pin-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border); transition: background .15s; }
+    .pin-dot.filled { background: var(--red); }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 24px; width: 100%; max-width: 340px; }
+    .pin-key {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; font-size: 22px; font-weight: 600; color: var(--text);
+      cursor: pointer; text-align: center; transition: background .1s, transform .1s;
+    }
+    .pin-key:active { background: var(--red); transform: scale(.95); }
+    .pin-key.del { font-size: 18px; color: var(--text-muted); }
+    .pin-error { color: var(--red-light); font-size: 13px; text-align: center; margin-top: 14px; min-height: 20px; }
+
+    /* ONBOARD */
+    #screen-onboard { background: var(--navy); padding: 40px 24px; justify-content: center; }
+
+    /* MARKET CARD */
+    .market-card { border-color: rgba(196,30,58,.3) !important; }
+    .market-title { color: var(--red) !important; }
+
+    @media (max-height: 700px) {
+      .pin-logo { margin-bottom: 20px; }
+      .pin-keypad { gap: 8px; }
+      .pin-key { padding: 13px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="toast" id="toast"></div>
+
+  <!-- ══ ONBOARDING ══ -->
+  <div class="screen" id="screen-onboard">
+    <div style="text-align:center;margin-bottom:36px">
+      <div class="bird-icon" style="margin:0 auto 14px">🐦‍🔴</div>
+      <h1 style="font-size:26px;font-weight:900">Cardinal Pricer</h1>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px">T. Byrd's Heating and Air</div>
+    </div>
+    <div id="ob-step-1">
+      <div class="card-title">Set up your company</div>
+      <div class="field-group">
+        <div class="field-label">Company Name</div>
+        <input type="text" id="ob-company" value="T. Byrd's Heating and Air">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Location</div>
+        <input type="text" id="ob-location" value="Charlotte, NC">
+      </div>
+      <button class="btn btn-primary" onclick="obNext(1)">Continue →</button>
+    </div>
+    <div id="ob-step-2" style="display:none">
+      <div class="card-title">Choose your admin PIN</div>
+      <div class="field-group">
+        <div class="field-label">4-Digit PIN</div>
+        <input type="number" id="ob-pin" placeholder="e.g. 4695" inputmode="numeric">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Confirm PIN</div>
+        <input type="number" id="ob-pin2" placeholder="Repeat PIN" inputmode="numeric">
+      </div>
+      <button class="btn btn-primary" onclick="obNext(2)">Launch Cardinal Pricer 🐦‍🔴</button>
+    </div>
+  </div>
+
+  <!-- ══ PIN ══ -->
+  <div class="screen" id="screen-pin">
+    <div class="pin-logo">
+      <div class="bird-icon">🐦‍🔴</div>
+      <h1>Cardinal Pricer</h1>
+      <div class="pin-company" id="pin-co-name">T. Byrd's Heating and Air</div>
+    </div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pk(1)">1</button>
+      <button class="pin-key" onclick="pk(2)">2</button>
+      <button class="pin-key" onclick="pk(3)">3</button>
+      <button class="pin-key" onclick="pk(4)">4</button>
+      <button class="pin-key" onclick="pk(5)">5</button>
+      <button class="pin-key" onclick="pk(6)">6</button>
+      <button class="pin-key" onclick="pk(7)">7</button>
+      <button class="pin-key" onclick="pk(8)">8</button>
+      <button class="pin-key" onclick="pk(9)">9</button>
+      <button class="pin-key" onclick="pk('skip')" style="font-size:12px;color:var(--text-muted)">Skip</button>
+      <button class="pin-key" onclick="pk(0)">0</button>
+      <button class="pin-key del" onclick="pdel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-err"></div>
+  </div>
+
+  <!-- ══ MAIN APP ══ -->
+  <div class="screen" id="screen-app">
+    <div class="app-header">
+      <div class="header-row">
+        <div>
+          <div class="company-name" id="h-company">T. Byrd's Heating and Air</div>
+          <div class="header-sub">Cardinal Pricer · Charlotte, NC</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:var(--text-muted)" id="h-month"></span>
+          <div class="cardinal-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOME TAB -->
+    <div id="tab-home" class="scroll-content">
+      <div class="btn-row" style="margin-bottom:14px">
+        <button class="btn btn-primary" onclick="goTab('pricer')" style="font-size:15px;padding:15px">
+          ⚡ Quick Price
+        </button>
+        <button class="btn btn-secondary" onclick="openService()" style="font-size:15px;padding:15px;border-color:var(--red);color:var(--red)">
+          🔧 Service Call
+        </button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">GP This Month</div>
+          <div class="stat-val" id="h-gp">$0</div>
+          <div class="stat-sub">of <span id="h-target">$50k</span> goal</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Jobs This Month</div>
+          <div class="stat-val" id="h-jobs">0</div>
+          <div class="stat-sub">quotes &amp; sold</div>
+        </div>
+      </div>
+      <div class="card-title" style="margin-top:4px">Recent Jobs</div>
+      <div class="card" id="home-jobs-card">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>No jobs yet</h3>
+          <p>Use Quick Price to price a part, or tap + New Quote for a full system job.</p>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="openQuote()" style="margin-top:4px">+ New Equipment Quote</button>
+    </div>
+
+    <!-- PRICER TAB -->
+    <div id="tab-pricer" class="scroll-content" style="display:none">
+      <div class="card-title">⚡ Quick Pricer</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Enter what you paid the supplier. Get what to charge the customer.</p>
+
+      <div class="card">
+        <div class="field-label" style="margin-bottom:10px">Category</div>
+        <div class="cat-row" id="cat-row">
+          <div class="cat-chip active" onclick="setCat(this,'Part')">🔩 Part</div>
+          <div class="cat-chip" onclick="setCat(this,'Equipment')">🌡️ Equipment</div>
+          <div class="cat-chip" onclick="setCat(this,'Refrigerant')">❄️ Refrigerant</div>
+          <div class="cat-chip" onclick="setCat(this,'Labor')">🔧 Labor</div>
+          <div class="cat-chip" onclick="setCat(this,'Filter')">🌀 Filter</div>
+          <div class="cat-chip" onclick="setCat(this,'Misc')">📦 Misc</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field-label">What did you pay the supplier?</div>
+        <div class="price-input-wrap">
+          <span class="currency">$</span>
+          <input type="number" id="p-cost" placeholder="0.00" inputmode="decimal" oninput="calcP()">
+        </div>
+        <input type="text" id="p-desc" placeholder="Part / item description (optional)" style="margin-top:10px;font-size:13px;padding:9px 12px">
+      </div>
+
+      <div class="card">
+        <div class="field-label" style="margin-bottom:10px">Target Gross Margin</div>
+        <div class="margin-grid" id="p-margin-grid">
+          <button class="margin-btn" onclick="setPM(this,30)">30%</button>
+          <button class="margin-btn" onclick="setPM(this,40)">40%</button>
+          <button class="margin-btn active" onclick="setPM(this,50)">50%</button>
+          <button class="margin-btn" onclick="setPM(this,60)">60%</button>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+          <div class="field-label" style="margin-bottom:0;white-space:nowrap">Custom</div>
+          <input type="number" id="p-custom-margin" placeholder="e.g. 45" inputmode="numeric" style="padding:9px 12px;font-size:14px" oninput="setPCustom()">
+          <span style="color:var(--text-muted);font-size:14px">%</span>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div class="result-box" id="p-result" style="display:none">
+        <div class="result-label">Charge the Customer</div>
+        <div class="result-price" id="p-sell">$0</div>
+        <div class="result-tags">
+          <div class="result-tag" id="p-gp-tag">✓ $0 GP</div>
+          <div class="result-tag" id="p-margin-tag">◎ 0% GM</div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+          <button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 18px" onclick="copyP()">📋 Copy</button>
+          <button class="btn btn-secondary btn-sm" style="width:auto;padding:8px 18px" onclick="addToQ()">+ Add to Quote</button>
+        </div>
+      </div>
+
+      <!-- MARKUP REFERENCE -->
+      <div class="card market-card">
+        <div class="card-title market-title">📍 Charlotte NC Market Guide</div>
+        <div class="breakdown-row">
+          <span class="br-label">Parts — target margin</span>
+          <span class="br-val" style="color:var(--green-light)">50% GM</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label">Equipment — target margin</span>
+          <span class="br-val" style="color:var(--green-light)">35–45% GM</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label">Refrigerant (per lb sell)</span>
+          <span class="br-val">$65–$90</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label">Labor rate (billed)</span>
+          <span class="br-val">$125–$175/hr</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label">Service / diag call</span>
+          <span class="br-val">$89–$129</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label">2-Ton install range</span>
+          <span class="br-val">$5,500–$8,500</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUOTES TAB -->
+    <div id="tab-quotes" class="scroll-content" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">Quotes &amp; Jobs</div>
+        <button class="btn btn-sm btn-primary" style="width:auto" onclick="openQuote()">+ New</button>
+      </div>
+      <div id="quotes-list">
+        <div class="empty-state">
+          <div class="empty-icon">🗂️</div>
+          <h3>No quotes yet</h3>
+          <p>Tap + New for an equipment replacement quote.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACKER TAB -->
+    <div id="tab-tracker" class="scroll-content" style="display:none">
+      <div class="card-title">GP Tracker — <span id="t-month">June 2026</span></div>
+
+      <div class="card" style="background:var(--navy-mid)">
+        <div class="stat-grid" style="margin-bottom:0">
+          <div class="stat-box" style="background:var(--card)">
+            <div class="stat-label">GP This Month</div>
+            <div class="stat-val" id="t-gp">$0</div>
+            <div class="stat-sub" id="t-pct">0% of target</div>
+          </div>
+          <div class="stat-box" style="background:var(--card)">
+            <div class="stat-label">GP Target</div>
+            <div class="stat-val" id="t-target">$50,000</div>
+            <div class="stat-sub">monthly goal</div>
+          </div>
+          <div class="stat-box" style="background:var(--card)">
+            <div class="stat-label">Overhead</div>
+            <div class="stat-val" id="t-overhead">$30,000</div>
+            <div class="stat-sub" id="t-oh-status">not covered</div>
+          </div>
+          <div class="stat-box" style="background:var(--card)">
+            <div class="stat-label">Jobs Done</div>
+            <div class="stat-val" id="t-done">0</div>
+            <div class="stat-sub">completed</div>
+          </div>
+        </div>
+        <div class="gp-bar-wrap">
+          <div class="gp-bar-fill" id="t-bar" style="width:0%"></div>
+        </div>
+        <div class="gp-bar-labels"><span>$0</span><span>Overhead</span><span>Target</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Monthly Pace</div>
+        <div class="breakdown-row"><span class="br-label">Days elapsed</span><span class="br-val" id="p-elapsed">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Days remaining</span><span class="br-val" id="p-remaining">—</span></div>
+        <div class="breakdown-row"><span class="br-label">GP per day (actual)</span><span class="br-val" id="p-actual">$0/day</span></div>
+        <div class="breakdown-row"><span class="br-label">GP per day needed</span><span class="br-val" id="p-needed">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Projected month-end GP</span><span class="br-val" id="p-projected">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Floor Calculator</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">What's the min GP% I need on my next job to stay on pace?</p>
+        <div class="field-group">
+          <div class="field-label">Job Size</div>
+          <div class="price-input-wrap">
+            <span class="currency" style="font-size:16px">$</span>
+            <input type="number" id="floor-size" placeholder="10,000" inputmode="numeric" oninput="calcFloor()" style="font-size:20px;padding:12px 0">
+          </div>
+        </div>
+        <div class="breakdown-row"><span class="br-label">GP still needed this month</span><span class="br-val" id="fl-needed">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Minimum GP $ on this job</span><span class="br-val" id="fl-gp">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Minimum GP %</span><span class="br-val" id="fl-pct" style="color:var(--red-light);font-size:16px;font-weight:800">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Monthly Targets</div>
+        <div class="settings-row">
+          <div><div class="sr-label">GP Target</div><div class="sr-sub">Monthly gross profit goal</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:var(--text-muted)">$</span>
+            <input type="number" id="s-gp-target" value="50000" oninput="saveS()" style="width:90px">
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Monthly Overhead</div><div class="sr-sub">Fixed costs first</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:var(--text-muted)">$</span>
+            <input type="number" id="s-overhead" value="30000" oninput="saveS()" style="width:90px">
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Working Days / Month</div></div>
+          <input type="number" id="s-workdays" value="22" oninput="saveS()" style="width:55px">
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="tab-settings" class="scroll-content" style="display:none">
+      <div class="card-title">Settings</div>
+
+      <div class="card">
+        <div class="card-title">Company</div>
+        <div class="settings-row">
+          <div class="sr-label">Company Name</div>
+          <input type="text" id="s-company" value="T. Byrd's Heating and Air" oninput="saveS()" style="width:160px;font-size:13px">
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Location</div>
+          <input type="text" id="s-location" value="Charlotte, NC" oninput="saveS()" style="width:130px;font-size:13px">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Default Margins</div>
+        <div class="settings-row">
+          <div><div class="sr-label">Parts Margin</div><div class="sr-sub">Default GM for parts</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="s-part-margin" value="50" oninput="saveS()" style="width:55px">
+            <span style="color:var(--text-muted)">%</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Equipment Margin</div><div class="sr-sub">Default GM for equipment</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="s-equip-margin" value="40" oninput="saveS()" style="width:55px">
+            <span style="color:var(--text-muted)">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Job Costs</div>
+        <div class="settings-row">
+          <div><div class="sr-label">Labor Rate (billed/hr)</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:var(--text-muted)">$</span>
+            <input type="number" id="s-labor" value="150" oninput="saveS()" style="width:70px">
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Service / Diag Fee</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:var(--text-muted)">$</span>
+            <input type="number" id="s-diag" value="99" oninput="saveS()" style="width:70px">
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Equipment Tax Rate</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="s-tax" value="7" oninput="saveS()" style="width:55px">
+            <span style="color:var(--text-muted)">%</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Permit Fee</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:var(--text-muted)">$</span>
+            <input type="number" id="s-permit" value="150" oninput="saveS()" style="width:70px">
+          </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="sr-label">Materials Buffer</div></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:var(--text-muted)">$</span>
+            <input type="number" id="s-materials" value="400" oninput="saveS()" style="width:70px">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Variable Costs (% of Sale)</div>
+        <div class="settings-row">
+          <div class="sr-label">Installer Pay</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="s-installer" value="7" oninput="saveS()" style="width:55px">
+            <span style="color:var(--text-muted)">%</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Commission</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="s-commission" value="8" oninput="saveS()" style="width:55px">
+            <span style="color:var(--text-muted)">%</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Marketing</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <input type="number" id="s-marketing" value="7" oninput="saveS()" style="width:55px">
+            <span style="color:var(--text-muted)">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Security</div>
+        <div class="settings-row">
+          <div><div class="sr-label">Admin PIN</div><div class="sr-sub">4-digit lock code</div></div>
+          <input type="number" id="s-pin" placeholder="••••" inputmode="numeric" oninput="saveS()" style="width:80px">
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:20px 0 8px;color:var(--text-dim);font-size:12px">
+        Cardinal Pricer v1.1 · T. Byrd's Heating and Air<br>Charlotte, NC · Built with ❤️ by Jarvis
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="goTab('home')" id="nav-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button class="nav-item" onclick="goTab('pricer')" id="nav-pricer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Pricer
+      </button>
+      <button class="nav-item" onclick="goTab('quotes')" id="nav-quotes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Quotes
+      </button>
+      <button class="nav-item" onclick="goTab('tracker')" id="nav-tracker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Tracker
+      </button>
+      <button class="nav-item" onclick="goTab('settings')" id="nav-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ SERVICE CALL SCREEN ══ -->
+  <div class="screen" id="screen-service">
+    <div class="app-header">
+      <button class="back-btn" onclick="closeService()">← Back</button>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:20px;font-weight:800">🔧 Service Call</div>
+        <div style="font-size:12px;color:var(--text-muted)">Flat-Rate Builder</div>
+      </div>
+    </div>
+    <div class="scroll-content">
+
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Build a profitable flat-rate price for a service call — diag fee + parts + labor all in one.</p>
+
+      <!-- DIAG FEE -->
+      <div class="card">
+        <div class="card-title">Diagnostic / Service Fee</div>
+        <div class="toggle-row" style="padding-top:0">
+          <div><div class="toggle-title">Include Diag Fee</div><div class="toggle-sub">Applied to call — $<span id="sc-diag-display">99</span></div></div>
+          <div class="toggle on" id="tgl-sc-diag" onclick="tglScDiag()"></div>
+        </div>
+        <div id="sc-diag-waive-row" class="toggle-row">
+          <div><div class="toggle-title">Waive if they proceed</div><div class="toggle-sub">Diag fee subtracted if repair is accepted</div></div>
+          <div class="toggle" id="tgl-sc-waive" onclick="tglScWaive()"></div>
+        </div>
+      </div>
+
+      <!-- PARTS -->
+      <div class="card">
+        <div class="card-title">Parts (Supplier Cost → Sell Price)</div>
+        <div id="sc-parts-list"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+          <div>
+            <div class="field-label" style="margin-bottom:6px">Description</div>
+            <input type="text" id="sc-part-desc" placeholder="e.g. Capacitor 45/5 MFD">
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom:6px">Supplier Cost</div>
+            <div class="price-input-wrap" style="padding:0 8px">
+              <span class="currency" style="font-size:16px">$</span>
+              <input type="number" id="sc-part-cost" placeholder="0.00" inputmode="decimal" style="font-size:18px;padding:10px 0">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="field-label" style="margin-bottom:6px">Parts Margin</div>
+          <div class="margin-grid" id="sc-part-margin-grid">
+            <button class="margin-btn" onclick="setScPM(this,40)">40%</button>
+            <button class="margin-btn active" onclick="setScPM(this,50)">50%</button>
+            <button class="margin-btn" onclick="setScPM(this,55)">55%</button>
+            <button class="margin-btn" onclick="setScPM(this,60)">60%</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="addScPart()">+ Add Part</button>
+      </div>
+
+      <!-- LABOR -->
+      <div class="card">
+        <div class="card-title">Labor</div>
+        <div class="field-group">
+          <div class="field-label">Labor Hours</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-secondary btn-sm" style="width:44px;padding:10px 0" onclick="adjScHours(-0.5)">−</button>
+            <input type="number" id="sc-hours" value="1.0" inputmode="decimal" step="0.5" style="text-align:center;font-size:20px;font-weight:700;padding:10px" oninput="calcSC()">
+            <button class="btn btn-secondary btn-sm" style="width:44px;padding:10px 0" onclick="adjScHours(0.5)">+</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Billed at $<span id="sc-rate-display">150</span>/hr (set in Settings)</div>
+        </div>
+      </div>
+
+      <!-- EXTRAS -->
+      <div class="card">
+        <div class="card-title">Extras</div>
+        <div class="toggle-row" style="padding-top:0">
+          <div><div class="toggle-title">1-Year Parts Warranty</div><div class="toggle-sub">Adds $25 flat</div></div>
+          <div class="toggle" id="tgl-sc-warranty" onclick="tglScWarranty()"></div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-title">Refrigerant Check</div><div class="toggle-sub">Adds $45 for leak check / top-off assessment</div></div>
+          <div class="toggle" id="tgl-sc-refrig" onclick="tglScRefrig()"></div>
+        </div>
+      </div>
+
+      <!-- BREAKDOWN -->
+      <div class="card" id="sc-breakdown" style="display:none">
+        <div class="card-title">Price Breakdown</div>
+        <div class="breakdown-row" id="sc-br-diag"><span class="br-label">Diagnostic fee</span><span class="br-val" id="sc-diag-val">$99</span></div>
+        <div class="breakdown-row"><span class="br-label">Parts (sell price)</span><span class="br-val" id="sc-br-parts">$0</span></div>
+        <div class="breakdown-row"><span class="br-label">Labor (<span id="sc-br-hrs">1.0</span> hrs)</span><span class="br-val" id="sc-br-labor">$0</span></div>
+        <div class="breakdown-row" id="sc-br-warranty-row" style="display:none"><span class="br-label">1-Yr Parts Warranty</span><span class="br-val">$25</span></div>
+        <div class="breakdown-row" id="sc-br-refrig-row" style="display:none"><span class="br-label">Refrigerant Check</span><span class="br-val">$45</span></div>
+        <div class="breakdown-row" id="sc-br-waive-row" style="display:none"><span class="br-label" style="color:var(--red-light)">Diag fee waived</span><span class="br-val" style="color:var(--red-light)" id="sc-br-waive-val">−$99</span></div>
+        <div class="divider"></div>
+        <div class="breakdown-row">
+          <span class="br-label" style="font-size:13px;color:var(--text-muted)">Parts cost (supplier)</span>
+          <span class="br-val" style="color:var(--text-muted)" id="sc-br-parts-cost">$0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label" style="font-size:13px;color:var(--text-muted)">Parts GP</span>
+          <span class="br-val" style="color:var(--green-light)" id="sc-br-parts-gp">$0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="br-label" style="font-size:13px;color:var(--text-muted)">Effective GM%</span>
+          <span class="br-val" style="color:var(--green-light)" id="sc-br-gm">—</span>
+        </div>
+      </div>
+
+      <div style="height:90px"></div>
+    </div>
+
+    <!-- STICKY RESULT -->
+    <div class="sticky-bar" id="sc-sticky" style="display:none">
+      <div><div class="sticky-label">Flat-Rate Total</div><div class="sticky-val" id="sc-sell">$0</div></div>
+      <div style="text-align:center"><div class="sticky-label">Gross Profit</div><div class="sticky-val" id="sc-gp">$0 <span class="sticky-pct" id="sc-gm-pct">0%</span></div></div>
+      <button class="btn btn-green btn-sm" style="width:auto" onclick="saveServiceJob()">💾 Save</button>
+    </div>
+  </div>
+
+  <!-- ══ QUOTE SCREEN ══ -->
+  <div class="screen" id="screen-quote">
+    <div class="app-header">
+      <button class="back-btn" onclick="closeQuote()">← Back</button>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:20px;font-weight:800">New Quote</div>
+        <select id="q-status" style="width:auto;padding:6px 10px;font-size:13px;background:var(--card-light)">
+          <option>Quoted</option><option>Sold</option><option>Completed</option>
+        </select>
+      </div>
+    </div>
+    <div class="scroll-content">
+
+      <!-- Good/Better/Best -->
+      <div class="gbb-tabs">
+        <button class="gbb-tab active" onclick="setGBB('single',this)">Single Option</button>
+        <button class="gbb-tab" onclick="setGBB('gbb',this)">Good / Better / Best</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Customer</div>
+        <div class="field-group">
+          <div class="field-label">Customer Name</div>
+          <input type="text" id="q-customer" placeholder="Full name">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Address (optional)</div>
+          <input type="text" id="q-address" placeholder="Street address">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">System</div>
+        <div class="field-group">
+          <div class="field-label">System Type</div>
+          <select id="q-system">
+            <option>Split Gas/Electric AC</option>
+            <option>Split Heat Pump</option>
+            <option>Packaged Heat Pump</option>
+            <option>Mini-Split</option>
+            <option>Service / Repair Only</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Tonnage</div>
+          <select id="q-tonnage">
+            <option>1.5 Ton</option><option>2 Ton</option><option>2.5 Ton</option>
+            <option selected>3 Ton</option><option>3.5 Ton</option><option>4 Ton</option><option>5 Ton</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Supplier Equipment Cost</div>
+          <div class="price-input-wrap">
+            <span class="currency">$</span>
+            <input type="number" id="q-equip-cost" placeholder="0.00" inputmode="decimal" oninput="calcQ()">
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:5px">What you paid Johnstone / Ferguson / Winsupply</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Brand / Series (optional)</div>
+          <input type="text" id="q-brand" placeholder="e.g. Goodman GLXT7C 17.2 SEER2">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Target Gross Margin</div>
+        <div class="margin-grid" id="q-margin-grid">
+          <button class="margin-btn" onclick="setQM(this,30)">30%</button>
+          <button class="margin-btn" onclick="setQM(this,35)">35%</button>
+          <button class="margin-btn active" onclick="setQM(this,40)">40%</button>
+          <button class="margin-btn" onclick="setQM(this,45)">45%</button>
+        </div>
+        <div class="toggle-row" style="margin-top:12px">
+          <div><div class="toggle-title">Financing</div><div class="toggle-sub">Adds 5.5% to cost</div></div>
+          <div class="toggle" id="tgl-fin" onclick="tglFin()"></div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-title">Crane Required</div><div class="toggle-sub">Adds $500 flat</div></div>
+          <div class="toggle" id="tgl-crane" onclick="tglCrane()"></div>
+        </div>
+      </div>
+
+      <!-- Added from pricer -->
+      <div class="card" id="q-items-card" style="display:none">
+        <div class="card-title">Additional Items (from Pricer)</div>
+        <div id="q-items-list"></div>
+      </div>
+
+      <!-- Breakdown -->
+      <div class="card" id="q-breakdown" style="display:none">
+        <div class="card-title">Cost Breakdown</div>
+        <div class="breakdown-row"><span class="br-label">Equipment <span class="br-tag">supplier</span></span><span class="br-val" id="qb-equip">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Tax <span class="br-tag">7%</span></span><span class="br-val" id="qb-tax">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Materials buffer <span class="br-tag">fixed</span></span><span class="br-val" id="qb-mat">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Permit <span class="br-tag">fixed</span></span><span class="br-val" id="qb-permit">—</span></div>
+        <div class="breakdown-row" id="qb-crane-row" style="display:none"><span class="br-label">Crane <span class="br-tag">fixed</span></span><span class="br-val">$500</span></div>
+        <div class="divider"></div>
+        <div class="section-hdr">Variable (% of sale)</div>
+        <div class="breakdown-row"><span class="br-label">Installer pay <span class="br-tag v">variable</span></span><span class="br-val" id="qb-install">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Commission <span class="br-tag v">variable</span></span><span class="br-val" id="qb-comm">—</span></div>
+        <div class="breakdown-row"><span class="br-label">Marketing <span class="br-tag v">variable</span></span><span class="br-val" id="qb-mkt">—</span></div>
+        <div class="breakdown-row" id="qb-fin-row" style="display:none"><span class="br-label">Financing 5.5% <span class="br-tag v">variable</span></span><span class="br-val" id="qb-fin">—</span></div>
+        <div class="divider"></div>
+        <div class="breakdown-row"><span class="br-label" style="font-weight:700;color:var(--text)">Total COGS</span><span class="br-val" id="qb-cogs">—</span></div>
+      </div>
+
+      <div style="height:80px"></div>
+    </div>
+
+    <div class="sticky-bar" id="q-sticky" style="display:none">
+      <div><div class="sticky-label">Sell Price</div><div class="sticky-val" id="q-sell">$0</div></div>
+      <div style="text-align:center"><div class="sticky-label">Gross Profit</div><div class="sticky-val" id="q-gp">$0 <span class="sticky-pct" id="q-gm">0%</span></div></div>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveQuote()">Save Job</button>
+    </div>
+  </div>
+
+</div>
+<script>
+// ═══════════════════════════════════════════
+// CARDINAL PRICER v1.0
+// T. Byrd's Heating and Air · Charlotte, NC
+// ═══════════════════════════════════════════
+
+let S = {
+  pin: '4695', company: "T. Byrd's Heating and Air", location: 'Charlotte, NC',
+  gpTarget: 50000, overhead: 30000, workDays: 22,
+  partMargin: 50, equipMargin: 38, laborRate: 150, diagFee: 99,
+  taxRate: 7, permit: 150, materials: 400,
+  installerPay: 7, commission: 8, marketing: 7,
+  jobs: [], lineItems: [],
+};
+
+let pMargin = 50, pCat = 'Part';
+let qMargin = 40, qFin = false, qCrane = false;
+let pinBuf = '', activeJob = null;
+
+function load() {
+  try { const d = JSON.parse(localStorage.getItem('cp_v1')||'{}'); Object.assign(S, d); } catch(e){}
+}
+function persist() { localStorage.setItem('cp_v1', JSON.stringify(S)); }
+
+function init() {
+  load();
+  const now = new Date();
+  const mn = ['January','February','March','April','May','June','July','August','September','October','November','December'][now.getMonth()];
+  const label = mn + ' ' + now.getFullYear();
+  document.getElementById('h-month').textContent = label;
+  document.getElementById('t-month').textContent = label;
+
+  const firstRun = !localStorage.getItem('cp_setup');
+  if (firstRun) { show('screen-onboard'); return; }
+  document.getElementById('pin-co-name').textContent = S.company;
+  show('screen-pin');
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ONBOARD
+function obNext(step) {
+  if (step === 1) {
+    const c = document.getElementById('ob-company').value.trim();
+    if (!c) { toast('Enter your company name'); return; }
+    S.company = c; S.location = document.getElementById('ob-location').value.trim();
+    document.getElementById('ob-step-1').style.display = 'none';
+    document.getElementById('ob-step-2').style.display = '';
+  } else {
+    const p = document.getElementById('ob-pin').value;
+    const p2 = document.getElementById('ob-pin2').value;
+    if (p.length !== 4) { toast('PIN must be 4 digits'); return; }
+    if (p !== p2) { toast("PINs don't match"); return; }
+    S.pin = p; persist();
+    localStorage.setItem('cp_setup', '1');
+    document.getElementById('pin-co-name').textContent = S.company;
+    show('screen-pin');
+  }
+}
+
+// PIN
+function pk(d) {
+  if (d === 'skip') { enterApp(); return; }
+  if (pinBuf.length >= 4) return;
+  pinBuf += d; updDots();
+  if (pinBuf.length === 4) {
+    setTimeout(() => {
+      if (pinBuf === S.pin) { enterApp(); }
+      else {
+        document.getElementById('pin-err').textContent = 'Incorrect PIN — try again';
+        pinBuf = ''; updDots();
+      }
+    }, 140);
+  }
+}
+function pdel() { pinBuf = pinBuf.slice(0,-1); document.getElementById('pin-err').textContent=''; updDots(); }
+function updDots() {
+  for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i<pinBuf.length);
+}
+function enterApp() {
+  pinBuf = ''; updDots();
+  document.getElementById('h-company').textContent = S.company;
+  loadSettings(); updateHome(); updateTracker();
+  show('screen-app'); goTab('home');
+}
+
+// TABS
+function goTab(tab) {
+  ['home','pricer','quotes','tracker','settings'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? '' : 'none';
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='tracker') updateTracker();
+  if (tab==='quotes') renderQuotes();
+}
+
+// ─── QUICK PRICER ───
+function setCat(el, cat) {
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); pCat = cat;
+  const def = {Part:50,Equipment:40,Refrigerant:50,Labor:60,Filter:60,Misc:50};
+  setPMarginVal(def[cat]||50); calcP();
+}
+function setPM(el, pct) {
+  document.querySelectorAll('#p-margin-grid .margin-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); pMargin = pct;
+  document.getElementById('p-custom-margin').value = ''; calcP();
+}
+function setPMarginVal(pct) {
+  pMargin = pct;
+  document.querySelectorAll('#p-margin-grid .margin-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.textContent)===pct);
+  });
+}
+function setPCustom() {
+  const v = parseFloat(document.getElementById('p-custom-margin').value);
+  if (v>0&&v<100) { pMargin=v; document.querySelectorAll('#p-margin-grid .margin-btn').forEach(b=>b.classList.remove('active')); calcP(); }
+}
+function calcP() {
+  const cost = parseFloat(document.getElementById('p-cost').value)||0;
+  const res = document.getElementById('p-result');
+  if (cost<=0) { res.style.display='none'; return; }
+  const sell = cost / (1 - pMargin/100);
+  const gp = sell - cost;
+  document.getElementById('p-sell').textContent = fmt(sell);
+  document.getElementById('p-gp-tag').textContent = '✓ ' + fmt(gp) + ' GP';
+  document.getElementById('p-margin-tag').textContent = '◎ ' + Math.round(pMargin) + '% GM';
+  res.style.display = '';
+}
+function copyP() {
+  const v = document.getElementById('p-sell').textContent.replace('$','').replace(',','');
+  navigator.clipboard.writeText(v).then(()=>toast('Price copied!')).catch(()=>toast(document.getElementById('p-sell').textContent));
+}
+function addToQ() {
+  const cost = parseFloat(document.getElementById('p-cost').value)||0;
+  if (!cost) return;
+  const sell = cost/(1-pMargin/100);
+  const desc = document.getElementById('p-desc').value || pCat;
+  S.lineItems.push({desc, cost, sell, margin: pMargin});
+  toast(desc + ' added to quote ✓');
+}
+
+// ─── QUOTE BUILDER ───
+function openQuote() {
+  activeJob = {id: Date.now()};
+  qMargin=40; qFin=false; qCrane=false;
+  ['q-customer','q-address','q-brand'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('q-equip-cost').value='';
+  document.getElementById('q-status').value='Quoted';
+  document.getElementById('tgl-fin').classList.remove('on');
+  document.getElementById('tgl-crane').classList.remove('on');
+  document.getElementById('qb-crane-row').style.display='none';
+  document.getElementById('qb-fin-row').style.display='none';
+  document.getElementById('q-sticky').style.display='none';
+  document.getElementById('q-breakdown').style.display='none';
+  document.querySelectorAll('#q-margin-grid .margin-btn').forEach(b=>b.classList.toggle('active',b.textContent==='40%'));
+  renderQItems(); show('screen-quote');
+}
+function closeQuote() { show('screen-app'); goTab('quotes'); }
+
+function setQM(el, pct) {
+  document.querySelectorAll('#q-margin-grid .margin-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); qMargin=pct; calcQ();
+}
+function tglFin() { qFin=!qFin; document.getElementById('tgl-fin').classList.toggle('on',qFin); document.getElementById('qb-fin-row').style.display=qFin?'':'none'; calcQ(); }
+function tglCrane() { qCrane=!qCrane; document.getElementById('tgl-crane').classList.toggle('on',qCrane); document.getElementById('qb-crane-row').style.display=qCrane?'':'none'; calcQ(); }
+function setGBB(mode,el) { document.querySelectorAll('.gbb-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+
+function calcQ() {
+  const ec = parseFloat(document.getElementById('q-equip-cost').value)||0;
+  if (ec<=0) return;
+  const tax = ec * (S.taxRate/100);
+  const crane = qCrane?500:0;
+  const fixed = ec+tax+S.materials+S.permit+crane;
+  const ip=S.installerPay/100, cm=S.commission/100, mk=S.marketing/100, fn=qFin?0.055:0;
+  const varR = ip+cm+mk+fn;
+  const gm = qMargin/100;
+  const sell = fixed/(1-gm-varR);
+  const gp = sell*gm;
+  const cogs = sell-gp;
+
+  document.getElementById('qb-equip').textContent=fmt(ec);
+  document.getElementById('qb-tax').textContent=fmt(tax);
+  document.getElementById('qb-mat').textContent=fmt(S.materials);
+  document.getElementById('qb-permit').textContent=fmt(S.permit);
+  document.getElementById('qb-install').textContent=fmt(sell*ip);
+  document.getElementById('qb-comm').textContent=fmt(sell*cm);
+  document.getElementById('qb-mkt').textContent=fmt(sell*mk);
+  if(qFin) document.getElementById('qb-fin').textContent=fmt(sell*fn);
+  document.getElementById('qb-cogs').textContent=fmt(cogs);
+  document.getElementById('q-sell').textContent=fmt(sell);
+  document.getElementById('q-gp').innerHTML=fmt(gp)+' <span class="sticky-pct" style="color:var(--green-light)">'+Math.round(gm*100)+'%</span>';
+
+  document.getElementById('q-sticky').style.display='';
+  document.getElementById('q-breakdown').style.display='';
+  activeJob._sell=sell; activeJob._gp=gp; activeJob._gm=gm; activeJob._ec=ec;
+}
+
+function renderQItems() {
+  const card = document.getElementById('q-items-card');
+  const list = document.getElementById('q-items-list');
+  if (!S.lineItems.length) { card.style.display='none'; return; }
+  card.style.display='';
+  list.innerHTML = S.lineItems.map((it,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(42,61,84,.4);font-size:13px">
+      <span style="flex:1;color:var(--text)">${it.desc}</span>
+      <span style="color:var(--text-muted);margin:0 12px">${fmt(it.cost)}</span>
+      <span style="font-weight:600">${fmt(it.sell)}</span>
+      <span style="color:var(--text-dim);cursor:pointer;padding:4px 6px;font-size:16px" onclick="removeItem(${i})">×</span>
+    </div>
+  `).join('');
+}
+function removeItem(i) { S.lineItems.splice(i,1); renderQItems(); }
+
+function saveQuote() {
+  const customer = document.getElementById('q-customer').value.trim()||'Unknown Customer';
+  const job = {
+    id: activeJob.id, customer, status: document.getElementById('q-status').value,
+    sell: activeJob._sell||0, gp: activeJob._gp||0, gm: activeJob._gm||0,
+    system: document.getElementById('q-system').value,
+    tonnage: document.getElementById('q-tonnage').value,
+    date: new Date().toISOString(),
+  };
+  const idx = S.jobs.findIndex(j=>j.id===job.id);
+  if (idx>=0) S.jobs[idx]=job; else S.jobs.unshift(job);
+  persist(); toast('Job saved! 🐦‍🔴');
+  closeQuote(); updateHome(); updateTracker();
+}
+
+// ─── HOME ───
+function updateHome() {
+  const now=new Date(), m=now.getMonth(), y=now.getFullYear();
+  const mt = S.jobs.filter(j=>{const d=new Date(j.date);return d.getMonth()===m&&d.getFullYear()===y;});
+  const gp = mt.filter(j=>j.status!=='Quoted').reduce((s,j)=>s+(j.gp||0),0);
+  document.getElementById('h-gp').textContent=fmtK(gp);
+  document.getElementById('h-target').textContent=fmtK(S.gpTarget);
+  document.getElementById('h-jobs').textContent=mt.length;
+  const card=document.getElementById('home-jobs-card');
+  if (!S.jobs.length) { card.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h3>No jobs yet</h3><p>Tap Quick Price or New Equipment Quote to get started.</p></div>'; return; }
+  card.innerHTML=S.jobs.slice(0,6).map(j=>`
+    <div class="list-item">
+      <div><div class="li-main">${j.customer}</div><div class="li-sub">${j.system||''} · ${new Date(j.date).toLocaleDateString()}</div></div>
+      <div class="li-right"><div class="li-val">${fmt(j.sell)}</div><div><span class="li-badge ${j.status.toLowerCase()}">${j.status}</span></div></div>
+    </div>
+  `).join('');
+}
+
+function renderQuotes() {
+  const el=document.getElementById('quotes-list');
+  if (!S.jobs.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🗂️</div><h3>No quotes yet</h3><p>Tap + New to build your first equipment replacement quote.</p></div>'; return; }
+  el.innerHTML=S.jobs.map(j=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><div style="font-size:16px;font-weight:700">${j.customer}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${j.system||''} · ${j.tonnage||''} · ${new Date(j.date).toLocaleDateString()}</div></div>
+        <span class="li-badge ${j.status.toLowerCase()}">${j.status}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <div><div style="font-size:10px;color:var(--text-muted)">SALE PRICE</div><div style="font-weight:700;font-size:16px">${fmt(j.sell)}</div></div>
+        <div style="text-align:center"><div style="font-size:10px;color:var(--text-muted)">GROSS PROFIT</div><div style="font-weight:700;font-size:16px;color:var(--green-light)">${fmt(j.gp)}</div></div>
+        <div style="text-align:right"><div style="font-size:10px;color:var(--text-muted)">MARGIN</div><div style="font-weight:700;font-size:16px">${Math.round((j.gm||0)*100)}%</div></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── TRACKER ───
+function updateTracker() {
+  const now=new Date(), m=now.getMonth(), y=now.getFullYear();
+  const target=parseFloat(document.getElementById('s-gp-target')?.value)||S.gpTarget;
+  const overhead=parseFloat(document.getElementById('s-overhead')?.value)||S.overhead;
+  const workDays=parseFloat(document.getElementById('s-workdays')?.value)||S.workDays;
+  const mt=S.jobs.filter(j=>{const d=new Date(j.date);return d.getMonth()===m&&d.getFullYear()===y;});
+  const gp=mt.filter(j=>j.status!=='Quoted').reduce((s,j)=>s+(j.gp||0),0);
+  const done=mt.filter(j=>j.status==='Completed').length;
+  const pct=target>0?Math.round(gp/target*100):0;
+
+  document.getElementById('t-gp').textContent=fmt(gp);
+  document.getElementById('t-target').textContent=fmt(target);
+  document.getElementById('t-overhead').textContent=fmt(overhead);
+  document.getElementById('t-oh-status').textContent=gp>=overhead?'✓ covered':'not covered';
+  document.getElementById('t-done').textContent=done;
+  document.getElementById('t-pct').textContent=pct+'% of target';
+  document.getElementById('t-bar').style.width=Math.min(pct,100)+'%';
+
+  const dim=new Date(y,m+1,0).getDate(), elapsed=now.getDate(), remaining=dim-elapsed;
+  const gpDay=elapsed>0?gp/elapsed:0, gpNeeded=Math.max(0,target-gp);
+  const gpDayNeeded=remaining>0?gpNeeded/remaining:0;
+  document.getElementById('p-elapsed').textContent=elapsed+' of '+dim+' days';
+  document.getElementById('p-remaining').textContent=remaining+' days';
+  document.getElementById('p-actual').textContent=fmtK(gpDay)+'/day';
+  document.getElementById('p-needed').textContent=remaining>0?fmtK(gpDayNeeded)+'/day':'On target!';
+  document.getElementById('p-projected').textContent=fmtK(gpDay*dim);
+  calcFloor();
+}
+
+function calcFloor() {
+  const size=parseFloat(document.getElementById('floor-size')?.value)||0;
+  const target=parseFloat(document.getElementById('s-gp-target')?.value)||S.gpTarget;
+  const now=new Date(),m=now.getMonth(),y=now.getFullYear();
+  const gp=S.jobs.filter(j=>{const d=new Date(j.date);return d.getMonth()===m&&d.getFullYear()===y&&j.status!=='Quoted';}).reduce((s,j)=>s+(j.gp||0),0);
+  const needed=Math.max(0,target-gp);
+  document.getElementById('fl-needed').textContent=fmt(needed);
+  if (size>0) {
+    const minGp=Math.min(needed,size);
+    const minPct=size>0?minGp/size*100:0;
+    document.getElementById('fl-gp').textContent=fmt(minGp);
+    document.getElementById('fl-pct').textContent=Math.round(minPct)+'%';
+  } else {
+    document.getElementById('fl-gp').textContent='—';
+    document.getElementById('fl-pct').textContent='—';
+  }
+}
+
+// ─── SETTINGS ───
+function loadSettings() {
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
+  set('s-company',S.company); set('s-location',S.location);
+  set('s-gp-target',S.gpTarget); set('s-overhead',S.overhead); set('s-workdays',S.workDays);
+  set('s-part-margin',S.partMargin); set('s-equip-margin',S.equipMargin);
+  set('s-labor',S.laborRate); set('s-diag',S.diagFee); set('s-tax',S.taxRate);
+  set('s-permit',S.permit); set('s-materials',S.materials);
+  set('s-installer',S.installerPay); set('s-commission',S.commission); set('s-marketing',S.marketing);
+}
+function saveS() {
+  const g=id=>parseFloat(document.getElementById(id)?.value)||0;
+  const t=id=>document.getElementById(id)?.value||'';
+  S.company=t('s-company'); S.location=t('s-location');
+  S.gpTarget=g('s-gp-target')||50000; S.overhead=g('s-overhead')||30000; S.workDays=g('s-workdays')||22;
+  S.partMargin=g('s-part-margin')||50; S.equipMargin=g('s-equip-margin')||40;
+  S.laborRate=g('s-labor')||150; S.diagFee=g('s-diag')||99; S.taxRate=g('s-tax')||7;
+  S.permit=g('s-permit')||150; S.materials=g('s-materials')||400;
+  S.installerPay=g('s-installer')||7; S.commission=g('s-commission')||8; S.marketing=g('s-marketing')||7;
+  const pin=document.getElementById('s-pin')?.value; if(pin&&pin.length===4) S.pin=pin;
+  document.getElementById('h-company').textContent=S.company;
+  persist();
+}
+
+// ─── SERVICE CALL ───
+let scDiag = true, scWaive = false, scWarranty = false, scRefrig = false;
+let scPartMargin = 50;
+let scParts = []; // [{desc, cost, sell}]
+
+function openService() {
+  scDiag = true; scWaive = false; scWarranty = false; scRefrig = false;
+  scPartMargin = 50; scParts = [];
+  // sync diag fee & rate from settings
+  document.getElementById('sc-diag-display').textContent = S.diagFee || 99;
+  document.getElementById('sc-rate-display').textContent = S.laborRate || 150;
+  document.getElementById('sc-hours').value = '1.0';
+  document.getElementById('sc-part-desc').value = '';
+  document.getElementById('sc-part-cost').value = '';
+  document.getElementById('tgl-sc-diag').classList.add('on');
+  document.getElementById('tgl-sc-waive').classList.remove('on');
+  document.getElementById('tgl-sc-warranty').classList.remove('on');
+  document.getElementById('tgl-sc-refrig').classList.remove('on');
+  document.getElementById('sc-diag-waive-row').style.display = '';
+  document.getElementById('sc-breakdown').style.display = 'none';
+  document.getElementById('sc-sticky').style.display = 'none';
+  document.querySelectorAll('#sc-part-margin-grid .margin-btn').forEach(b => b.classList.toggle('active', b.textContent === '50%'));
+  renderScParts(); show('screen-service');
+}
+function closeService() { show('screen-app'); goTab('home'); }
+
+function tglScDiag() {
+  scDiag = !scDiag;
+  document.getElementById('tgl-sc-diag').classList.toggle('on', scDiag);
+  document.getElementById('sc-diag-waive-row').style.display = scDiag ? '' : 'none';
+  if (!scDiag) { scWaive = false; document.getElementById('tgl-sc-waive').classList.remove('on'); }
+  calcSC();
+}
+function tglScWaive() {
+  scWaive = !scWaive;
+  document.getElementById('tgl-sc-waive').classList.toggle('on', scWaive);
+  calcSC();
+}
+function tglScWarranty() {
+  scWarranty = !scWarranty;
+  document.getElementById('tgl-sc-warranty').classList.toggle('on', scWarranty);
+  document.getElementById('sc-br-warranty-row').style.display = scWarranty ? '' : 'none';
+  calcSC();
+}
+function tglScRefrig() {
+  scRefrig = !scRefrig;
+  document.getElementById('tgl-sc-refrig').classList.toggle('on', scRefrig);
+  document.getElementById('sc-br-refrig-row').style.display = scRefrig ? '' : 'none';
+  calcSC();
+}
+
+function setScPM(el, pct) {
+  document.querySelectorAll('#sc-part-margin-grid .margin-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); scPartMargin = pct; calcSC();
+}
+
+function addScPart() {
+  const desc = document.getElementById('sc-part-desc').value.trim() || 'Part';
+  const cost = parseFloat(document.getElementById('sc-part-cost').value) || 0;
+  if (cost <= 0) { toast('Enter a part cost first'); return; }
+  const sell = cost / (1 - scPartMargin / 100);
+  scParts.push({ desc, cost, sell });
+  document.getElementById('sc-part-desc').value = '';
+  document.getElementById('sc-part-cost').value = '';
+  renderScParts(); calcSC();
+  toast(desc + ' added ✓');
+}
+
+function renderScParts() {
+  const el = document.getElementById('sc-parts-list');
+  if (!scParts.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:6px 0 10px">No parts added yet.</div>'; return; }
+  el.innerHTML = scParts.map((p, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(42,61,84,.4);font-size:13px">
+      <span style="flex:1">${p.desc}</span>
+      <span style="color:var(--text-muted);margin:0 8px">${fmt(p.cost)}</span>
+      <span style="font-weight:600;color:var(--green-light)">${fmt(p.sell)}</span>
+      <span style="color:var(--text-dim);cursor:pointer;padding:4px 8px;font-size:16px" onclick="removeScPart(${i})">×</span>
+    </div>
+  `).join('');
+}
+
+function removeScPart(i) { scParts.splice(i, 1); renderScParts(); calcSC(); }
+
+function adjScHours(delta) {
+  const el = document.getElementById('sc-hours');
+  const cur = parseFloat(el.value) || 0;
+  const next = Math.max(0.5, Math.round((cur + delta) * 2) / 2);
+  el.value = next.toFixed(1); calcSC();
+}
+
+function calcSC() {
+  const diagFee = S.diagFee || 99;
+  const laborRate = S.laborRate || 150;
+  const hours = parseFloat(document.getElementById('sc-hours').value) || 0;
+
+  const diagCharge = scDiag ? diagFee : 0;
+  const diagWaiveAmt = (scDiag && scWaive) ? diagFee : 0;
+  const partsSellTotal = scParts.reduce((s, p) => s + p.sell, 0);
+  const partsCostTotal = scParts.reduce((s, p) => s + p.cost, 0);
+  const laborCharge = hours * laborRate;
+  const warrantyAdd = scWarranty ? 25 : 0;
+  const refrigAdd = scRefrig ? 45 : 0;
+
+  const total = diagCharge + partsSellTotal + laborCharge + warrantyAdd + refrigAdd - diagWaiveAmt;
+  if (total <= 0) { document.getElementById('sc-breakdown').style.display = 'none'; document.getElementById('sc-sticky').style.display = 'none'; return; }
+
+  // GP = total revenue - (parts cost + labor cost to company [0] + diag waived)
+  // Labor cost to company not tracked here — GP on this screen = revenue - parts cost (service labor IS company profit)
+  const partsGP = partsSellTotal - partsCostTotal;
+  const totalGP = total - partsCostTotal; // diag + labor + warranty + extras are all GP
+  const gm = total > 0 ? (totalGP / total * 100) : 0;
+
+  // Update breakdown
+  document.getElementById('sc-br-diag').style.display = scDiag ? '' : 'none';
+  document.getElementById('sc-diag-val').textContent = fmt(diagFee);
+  document.getElementById('sc-br-parts').textContent = fmt(partsSellTotal);
+  document.getElementById('sc-br-hrs').textContent = hours.toFixed(1);
+  document.getElementById('sc-br-labor').textContent = fmt(laborCharge);
+  document.getElementById('sc-br-waive-row').style.display = diagWaiveAmt ? '' : 'none';
+  document.getElementById('sc-br-waive-val').textContent = '−' + fmt(diagWaiveAmt);
+  document.getElementById('sc-br-parts-cost').textContent = fmt(partsCostTotal);
+  document.getElementById('sc-br-parts-gp').textContent = fmt(partsGP);
+  document.getElementById('sc-br-gm').textContent = Math.round(gm) + '%';
+  document.getElementById('sc-breakdown').style.display = '';
+
+  // Sticky
+  document.getElementById('sc-sell').textContent = fmt(total);
+  document.getElementById('sc-gp').innerHTML = fmt(totalGP) + ' <span class="sticky-pct" style="color:var(--green-light)">' + Math.round(gm) + '%</span>';
+  document.getElementById('sc-sticky').style.display = '';
+}
+
+function saveServiceJob() {
+  const diagFee = S.diagFee || 99;
+  const laborRate = S.laborRate || 150;
+  const hours = parseFloat(document.getElementById('sc-hours').value) || 0;
+  const diagCharge = scDiag ? diagFee : 0;
+  const diagWaiveAmt = (scDiag && scWaive) ? diagFee : 0;
+  const partsSellTotal = scParts.reduce((s, p) => s + p.sell, 0);
+  const partsCostTotal = scParts.reduce((s, p) => s + p.cost, 0);
+  const laborCharge = hours * laborRate;
+  const warrantyAdd = scWarranty ? 25 : 0;
+  const refrigAdd = scRefrig ? 45 : 0;
+  const total = diagCharge + partsSellTotal + laborCharge + warrantyAdd + refrigAdd - diagWaiveAmt;
+  const totalGP = total - partsCostTotal;
+  const gm = total > 0 ? totalGP / total : 0;
+
+  const partNames = scParts.map(p => p.desc).join(', ') || 'Service Call';
+  const job = {
+    id: Date.now(), customer: 'Service Call', status: 'Sold',
+    sell: total, gp: totalGP, gm: gm,
+    system: 'Service / Repair — ' + partNames,
+    tonnage: hours + ' hrs labor',
+    date: new Date().toISOString(),
+  };
+  S.jobs.unshift(job);
+  persist(); toast('Service call saved! 🐦‍🔴');
+  closeService(); updateHome(); updateTracker();
+}
+
+// ─── UTILS ───
+function fmt(n) { if(!n&&n!==0) return '—'; return '$'+Math.round(n).toLocaleString(); }
+function fmtK(n) { if(!n&&n!==0) return '$0'; if(Math.abs(n)>=1000) return '$'+(n/1000).toFixed(1)+'k'; return '$'+Math.round(n); }
+function toast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+init();
+</script>
+</body>
+</html>
