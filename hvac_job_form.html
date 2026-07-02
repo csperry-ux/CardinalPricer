@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HVAC Install Pipeline - Job Entry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #C41E3A;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #C41E3A;
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+        
+        .conditional-field {
+            display: none;
+        }
+        
+        .conditional-field.show {
+            display: block;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-submit {
+            background: #C41E3A;
+            color: white;
+        }
+        
+        .btn-submit:hover {
+            background: #9B1630;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(196, 30, 58, 0.2);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+        
+        .success-message {
+            display: none;
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        .error-message {
+            display: none;
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .required {
+            color: #C41E3A;
+        }
+        
+        .instructions {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔴 HVAC Install Pipeline</h1>
+            <p>T. Byrd's Heating and Air</p>
+        </div>
+        
+        <div class="instructions">
+            <strong>Instructions:</strong> Fill out all required fields (<span class="required">*</span>) to log a new sold job. The data will be automatically saved to the shared pipeline.
+        </div>
+        
+        <div class="success-message" id="successMsg">
+            ✅ Job added successfully! Ready for next entry.
+        </div>
+        
+        <div class="error-message" id="errorMsg">
+            ❌ Error saving job. Please try again or contact support.
+        </div>
+        
+        <form id="jobForm">
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="customerName">Customer Name <span class="required">*</span></label>
+                    <input type="text" id="customerName" name="customerName" required placeholder="e.g., Sebastian Moronta">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dateSold">Date Sold <span class="required">*</span></label>
+                    <input type="date" id="dateSold" name="dateSold" required>
+                </div>
+                <div class="form-group">
+                    <label for="installDate">Install Date <span class="required">*</span></label>
+                    <input type="date" id="installDate" name="installDate" required>
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" placeholder="Customer address">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="text" id="phone" name="phone" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label for="jobNumber">Job #</label>
+                    <input type="text" id="jobNumber" name="jobNumber" placeholder="HCP Job #">
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="equipment">Equipment Sold <span class="required">*</span></label>
+                    <textarea id="equipment" name="equipment" required placeholder="e.g., 2.5 ton Heat Pump, 3 Ton Air Handler, etc."></textarea>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="leadSource">Lead Source <span class="required">*</span></label>
+                    <select id="leadSource" name="leadSource" required>
+                        <option value="">-- Select --</option>
+                        <option value="Market">Market</option>
+                        <option value="Tech Turnover (TTO)">Tech Turnover (TTO)</option>
+                    </select>
+                </div>
+                <div class="form-group conditional-field" id="techField">
+                    <label for="techName">Which Tech? <span class="required">*</span></label>
+                    <select id="techName" name="techName">
+                        <option value="">-- Select --</option>
+                        <option value="Christian">Christian</option>
+                        <option value="Terry">Terry</option>
+                        <option value="PJ">PJ</option>
+                        <option value="Joao">Joao</option>
+                        <option value="Steph">Steph</option>
+                        <option value="Brandon">Brandon</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method <span class="required">*</span></label>
+                    <select id="paymentMethod" name="paymentMethod" required>
+                        <option value="">-- Select --</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Check">Check</option>
+                        <option value="GreenSky">GreenSky</option>
+                        <option value="Fastlane">Fastlane</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount <span class="required">*</span></label>
+                    <input type="number" id="amount" name="amount" required placeholder="0.00" step="0.01" min="0">
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" placeholder="Any special instructions or notes (optional)"></textarea>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn-submit">Submit Job</button>
+                <button type="reset" class="btn-reset">Clear</button>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+        // Set today's date as default for "Date Sold"
+        document.getElementById('dateSold').valueAsDate = new Date();
+        
+        // Show/hide "Which Tech?" field based on Lead Source
+        document.getElementById('leadSource').addEventListener('change', function() {
+            const techField = document.getElementById('techField');
+            if (this.value === 'Tech Turnover (TTO)') {
+                techField.classList.add('show');
+                document.getElementById('techName').required = true;
+            } else {
+                techField.classList.remove('show');
+                document.getElementById('techName').required = false;
+                document.getElementById('techName').value = '';
+            }
+        });
+        
+        // Handle form submission
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = {
+                customerName: document.getElementById('customerName').value,
+                dateSold: document.getElementById('dateSold').value,
+                installDate: document.getElementById('installDate').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                jobNumber: document.getElementById('jobNumber').value,
+                equipment: document.getElementById('equipment').value,
+                leadSource: document.getElementById('leadSource').value,
+                techName: document.getElementById('techName').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                amount: document.getElementById('amount').value,
+                notes: document.getElementById('notes').value
+            };
+            
+            try {
+                // Send to Google Sheets via Apps Script webhook
+                const response = await fetch('https://script.google.com/macros/s/AKfycbwhFpu3-xKP3X-3lT3DsiOIxCCdt4lmsfkdAYTGszc2OnUAIgos9kYo9bJai4Gyeix9/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    const successMsg = document.getElementById('successMsg');
+                    successMsg.classList.add('show');
+                    
+                    // Clear form
+                    this.reset();
+                    document.getElementById('dateSold').valueAsDate = new Date();
+                    
+                    // Hide success message after 5 seconds
+                    setTimeout(() => {
+                        successMsg.classList.remove('show');
+                    }, 5000);
+                } else {
+                    throw new Error('Server returned error');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMsg = document.getElementById('errorMsg');
+                errorMsg.classList.add('show');
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
