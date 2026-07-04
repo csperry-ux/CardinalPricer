@@ -403,13 +403,20 @@
             };
             
             try {
-                // Send to same server /submit endpoint
-                const response = await fetch('/submit', {
+                // Submit to backend (works with CORS enabled)
+                // For local testing: http://localhost:8000/submit
+                // For production: will be set by environment
+                const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:8000/submit'
+                    : '/submit';  // Will use same domain in production
+                
+                const response = await fetch(backendUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(formData),
+                    mode: 'cors'
                 });
                 
                 // Show success message (no-cors mode doesn't allow reading response)
