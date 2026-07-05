@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: hvac-pipeline
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+    envVars:
+      - key: GMAIL_APP_PASSWORD
+        value: isqu gwkv hcin jrzz
+      - key: PYTHON_VERSION
+        value: 3.11.0
