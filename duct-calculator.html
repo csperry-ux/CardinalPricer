@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HVAC Duct & Tonnage Calculator | T. Byrd's</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #2d5f3f 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .calculators {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .calculators {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calc-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .calc-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .calc-card h2 {
+            color: #C41E3A;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #1a472a;
+            padding-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #C41E3A;
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 14px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, #C41E3A, #8B0000);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-calculate:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(196, 30, 58, 0.3);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .result {
+            background: linear-gradient(135deg, #f8f9fa, #fff);
+            border-left: 5px solid #C41E3A;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result h3 {
+            color: #1a472a;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: #C41E3A;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #f0f7ff;
+            border: 2px solid #2d5f3f;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #1a472a;
+        }
+
+        .reference-table {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .reference-table h3 {
+            color: #C41E3A;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #1a472a;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            max-width: 80px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌡️ HVAC Duct & Tonnage Calculator</h1>
+            <p>Professional sizing per ACCA Manual D & J standards</p>
+        </div>
+
+        <div class="calculators">
+            <!-- TONNAGE CALCULATOR -->
+            <div class="calc-card">
+                <h2>Tonnage Calculator</h2>
+                <form id="tonnageForm">
+                    <div class="form-group">
+                        <label for="sqft">Square Footage</label>
+                        <input type="number" id="sqft" placeholder="e.g., 2500" step="100" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="climate">Climate Zone</label>
+                        <select id="climate" required>
+                            <option value="">-- Select --</option>
+                            <option value="1">Zone 1 (Miami, Houston - High cooling load)</option>
+                            <option value="2">Zone 2 (Atlanta, Phoenix - Medium-High cooling)</option>
+                            <option value="3">Zone 3 (Central - Medium cooling)</option>
+                            <option value="4">Zone 4 (Northern - Medium-Low cooling)</option>
+                            <option value="5">Zone 5 (Cold - Low cooling load)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="insulation">Insulation Quality</label>
+                        <select id="insulation" required>
+                            <option value="">-- Select --</option>
+                            <option value="poor">Poor (R-0 to R-7)</option>
+                            <option value="average">Average (R-11 to R-13)</option>
+                            <option value="good">Good (R-19 to R-21)</option>
+                            <option value="excellent">Excellent (R-30+)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sunExposure">Sun Exposure</label>
+                        <select id="sunExposure" required>
+                            <option value="">-- Select --</option>
+                            <option value="minimal">Minimal (mostly shade)</option>
+                            <option value="moderate">Moderate (mixed)</option>
+                            <option value="heavy">Heavy (mostly sun)</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-calculate">Calculate Tonnage</button>
+                        <button type="reset" class="btn-clear">Clear</button>
+                    </div>
+
+                    <div id="tonnageResult" class="result">
+                        <h3>📊 Sizing Recommendation</h3>
+                        <div class="result-item">
+                            <span class="result-label">BTU/Hour Required</span>
+                            <span class="result-value" id="btuResult">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Recommended Tonnage</span>
+                            <span class="result-value" id="tonnageResult">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Alternate Options</span>
+                            <span class="result-value" id="alternateResult">-</span>
+                        </div>
+                        <div class="info-box">
+                            <strong>💡 Note:</strong> These calculations follow ACCA Manual J standards for residential cooling loads. Always verify with a professional load calculation for accurate sizing.
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CFM & DUCT CALCULATOR -->
+            <div class="calc-card">
+                <h2>CFM & Duct Sizing</h2>
+                <form id="cfmForm">
+                    <div class="form-group">
+                        <label for="tonnage">System Tonnage</label>
+                        <input type="number" id="tonnage" placeholder="e.g., 3.5" step="0.5" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="roomSqft">Room Square Footage</label>
+                        <input type="number" id="roomSqft" placeholder="e.g., 300" step="10" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ductDiameter">Duct Diameter (inches)</label>
+                            <input type="number" id="ductDiameter" placeholder="e.g., 7" step="0.5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ductLength">Duct Length (feet)</label>
+                            <input type="number" id="ductLength" placeholder="e.g., 50" step="5" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="frictionRate">Friction Rate Target (in. WC/100 ft)</label>
+                        <select id="frictionRate" required>
+                            <option value="0.1">0.10" (ACCA Standard - Recommended)</option>
+                            <option value="0.08">0.08" (Low loss, oversized duct)</option>
+                            <option value="0.12">0.12" (Moderate, standard)</option>
+                            <option value="0.15">0.15" (Higher loss, compact design)</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-calculate">Calculate CFM & Sizing</button>
+                        <button type="reset" class="btn-clear">Clear</button>
+                    </div>
+
+                    <div id="cfmResult" class="result">
+                        <h3>📐 Duct Sizing Results</h3>
+                        <div class="result-item">
+                            <span class="result-label">CFM Required</span>
+                            <span class="result-value" id="cfmValue">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Duct Velocity (ft/min)</span>
+                            <span class="result-value" id="velocity">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Pressure Drop (in. WC)</span>
+                            <span class="result-value" id="pressureDrop">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Duct Area (sq. in.)</span>
+                            <span class="result-value" id="ductArea">-</span>
+                        </div>
+                        <div class="info-box">
+                            <strong>✓ Acceptable Range:</strong><br>
+                            • CFM Velocity: 700-900 ft/min (return), 600-700 ft/min (supply)<br>
+                            • Pressure Drop: &lt; 0.5" WC per duct run<br>
+                            <strong>⚠️ Note:</strong> If velocity exceeds limits, increase duct size.
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- REFERENCE TABLES -->
+        <div class="reference-table">
+            <h3>📋 ACCA Reference: Tonnage vs Square Footage</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Square Footage</th>
+                        <th>Typical Tonnage (Moderate Climate)</th>
+                        <th>Tonnage Range</th>
+                        <th>Est. BTU/Hour</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>500 - 750 sq ft</td>
+                        <td>1.5 Ton</td>
+                        <td>1.0 - 2.0</td>
+                        <td>18,000 - 24,000</td>
+                    </tr>
+                    <tr>
+                        <td>750 - 1,000 sq ft</td>
+                        <td>2.0 Ton</td>
+                        <td>1.5 - 2.5</td>
+                        <td>24,000 - 30,000</td>
+                    </tr>
+                    <tr>
+                        <td>1,000 - 1,500 sq ft</td>
+                        <td>2.5 Ton</td>
+                        <td>2.0 - 3.5</td>
+                        <td>30,000 - 42,000</td>
+                    </tr>
+                    <tr>
+                        <td>1,500 - 2,000 sq ft</td>
+                        <td>3.5 Ton</td>
+                        <td>2.5 - 4.0</td>
+                        <td>42,000 - 48,000</td>
+                    </tr>
+                    <tr>
+                        <td>2,000 - 2,500 sq ft</td>
+                        <td>4.0 Ton</td>
+                        <td>3.5 - 5.0</td>
+                        <td>42,000 - 60,000</td>
+                    </tr>
+                    <tr>
+                        <td>2,500 - 3,000 sq ft</td>
+                        <td>5.0 Ton</td>
+                        <td>4.0 - 5.5</td>
+                        <td>60,000 - 66,000</td>
+                    </tr>
+                    <tr>
+                        <td>3,000+ sq ft</td>
+                        <td>5.0+ Ton</td>
+                        <td>Multi-stage/zones</td>
+                        <td>60,000+</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="reference-table">
+            <h3>📋 CFM Standards by Application</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Application</th>
+                        <th>CFM per Ton</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cooling (Standard)</td>
+                        <td>350-400</td>
+                        <td>Most residential cooling loads</td>
+                    </tr>
+                    <tr>
+                        <td>Heating (Winter)</td>
+                        <td>300-350</td>
+                        <td>Lower airflow for heating comfort</td>
+                    </tr>
+                    <tr>
+                        <td>Heat Pump (Full)</td>
+                        <td>350-400</td>
+                        <td>Design for cooling capacity</td>
+                    </tr>
+                    <tr>
+                        <td>High Efficiency</td>
+                        <td>300-350</td>
+                        <td>Optimized for variable speed blower</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>💼 T. Byrd's Heating & Air | Professional HVAC Calculations</p>
+            <p style="font-size: 0.85em; margin-top: 10px;">Based on ACCA Manual D (Ductwork Design) & Manual J (Residential Load Calculation) standards</p>
+        </div>
+    </div>
+
+    <script>
+        // TONNAGE CALCULATOR
+        document.getElementById('tonnageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const sqft = parseFloat(document.getElementById('sqft').value);
+            const climate = document.getElementById('climate').value;
+            const insulation = document.getElementById('insulation').value;
+            const sunExposure = document.getElementById('sunExposure').value;
+
+            // ACCA Manual J load calculation (simplified)
+            // Base: 15-20 BTU/sqft for cooling
+            let baseLoad = 0;
+            if (climate == '1') baseLoad = 20; // Hot climate
+            else if (climate == '2') baseLoad = 18;
+            else if (climate == '3') baseLoad = 16;
+            else if (climate == '4') baseLoad = 14;
+            else if (climate == '5') baseLoad = 12;
+
+            let insMultiplier = 1;
+            if (insulation == 'poor') insMultiplier = 1.15;
+            else if (insulation == 'average') insMultiplier = 1.0;
+            else if (insulation == 'good') insMultiplier = 0.9;
+            else if (insulation == 'excellent') insMultiplier = 0.8;
+
+            let sunMultiplier = 1;
+            if (sunExposure == 'minimal') sunMultiplier = 0.9;
+            else if (sunExposure == 'moderate') sunMultiplier = 1.0;
+            else if (sunExposure == 'heavy') sunMultiplier = 1.1;
+
+            const btu = sqft * baseLoad * insMultiplier * sunMultiplier;
+            const tonnage = (btu / 12000).toFixed(1);
+
+            // Round to nearest 0.5 ton
+            const rounded = Math.round(tonnage * 2) / 2;
+            const alternate = [(rounded - 0.5).toFixed(1), (rounded + 0.5).toFixed(1)].join(' or ');
+
+            document.getElementById('btuResult').textContent = btu.toFixed(0) + ' BTU/hr';
+            document.getElementById('tonnageResult').textContent = rounded + ' Ton';
+            document.getElementById('alternateResult').textContent = alternate + ' Ton';
+            document.getElementById('tonnageResult').parentElement.parentElement.classList.add('show');
+        });
+
+        // CFM CALCULATOR
+        document.getElementById('cfmForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const tonnage = parseFloat(document.getElementById('tonnage').value);
+            const roomSqft = parseFloat(document.getElementById('roomSqft').value);
+            const diameter = parseFloat(document.getElementById('ductDiameter').value);
+            const length = parseFloat(document.getElementById('ductLength').value);
+            const frictionRate = parseFloat(document.getElementById('frictionRate').value);
+
+            // CFM = Tonnage × 350-400 (standard is 380)
+            const cfm = (tonnage * 380).toFixed(0);
+
+            // Duct area (circular): π × (d/2)²
+            const radius = diameter / 2;
+            const ductArea = (Math.PI * radius * radius).toFixed(2);
+
+            // Velocity = CFM / Duct Area × 144 (convert sq in to sq ft)
+            const velocity = (cfm / (ductArea / 144)).toFixed(0);
+
+            // Pressure drop = (Friction Rate × Length) / 100
+            const pressureDrop = (frictionRate * length / 100).toFixed(3);
+
+            document.getElementById('cfmValue').textContent = cfm + ' CFM';
+            document.getElementById('velocity').textContent = velocity + ' ft/min';
+            document.getElementById('pressureDrop').textContent = pressureDrop + '" WC';
+            document.getElementById('ductArea').textContent = ductArea + ' in²';
+            document.getElementById('cfmResult').classList.add('show');
+        });
+
+        // Clear form results
+        document.querySelectorAll('.btn-clear').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.result').forEach(r => r.classList.remove('show'));
+            });
+        });
+    </script>
+</body>
+</html>
