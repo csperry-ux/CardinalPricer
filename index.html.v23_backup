@@ -279,28 +279,6 @@
           </div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Use 15% for labor-heavy jobs, 20% for parts-heavy jobs</div>
         </div>
-
-      <!-- Tiered Multiplier Suggestion -->
-      <div id="multiplier-suggestion" style="margin-top:12px;padding:10px;background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.2);border-radius:8px;display:none">
-        <div class="field-label" style="color:var(--orange);margin-bottom:8px">💡 Suggested Multiplier</div>
-        <div id="multiplier-text" style="font-size:13px;color:var(--text);margin-bottom:10px">—</div>
-        <div id="multiplier-buttons" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px" id="multiplier-reason">—</div>
-      </div>
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">⚡ Quick Common Repairs</div>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Johnstone supplier costs (1-tap load):</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Capacitor',18)">Capacitor $18</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Contactor',32)">Contactor $32</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Blower Motor',145)">Blower Motor $145</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Control Board',120)">Control Board $120</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('TXV',65)">TXV $65</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Float Switch',12)">Float Switch $12</button>
-        </div>
-      </div>
-
-        </div>
       </div>
 
       <!-- Flat Rate: pricebook lookup -->
@@ -439,128 +417,6 @@
       </div>
     </div>
 
-
-    <!-- SERVICE CALL TAB -->
-    <div id="tab-servicecall" class="scroll-content" style="display:none">
-      <div class="card-title">Phone Service Call Builder</div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Build a complete service call: diagnostic + parts + labor.</p>
-      
-      <div class="card">
-        <div class="field-label">Diagnostic Fee</div>
-        <div class="price-input-wrap">
-          <span class="currency">$</span>
-          <input type="number" id="sc-diag" placeholder="99.00" value="99" inputmode="decimal" oninput="calcSC()">
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">Parts and Labor Items</div>
-        <div id="sc-items-list" style="margin-bottom:12px"></div>
-        <button class="btn btn-secondary btn-sm" onclick="addSCItem()" style="margin-bottom:12px">Add Part or Labor</button>
-      </div>
-      
-      <div class="card">
-        <div class="field-label">Hourly Labor Rate</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="sc-labor-rate" value="150" oninput="calcSC()" style="width:90px">
-          <span style="color:var(--text-muted)">per hour</span>
-        </div>
-      </div>
-      
-      <div class="result-box" id="sc-result" style="display:none">
-        <div class="result-label">Total Charge</div>
-        <div class="result-price" id="sc-sell">$0</div>
-        <div class="result-tags">
-          <div class="result-tag" id="sc-gp-tag">✓ $0 GP</div>
-          <div class="result-tag" id="sc-gp-pct">% GP</div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
-          <button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 18px" onclick="copySC()">Copy</button>
-          <button class="btn btn-secondary btn-sm" style="width:auto;padding:8px 18px" onclick="showSCBreakdown()">Breakdown</button>
-        </div>
-      </div>
-      
-      <div class="card" id="sc-breakdown" style="display:none">
-        <div class="card-title">Breakdown</div>
-        <div class="breakdown-row">
-          <span class="br-label">Diagnostic</span>
-          <span><span class="br-val" id="sc-bd-diag">—</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Parts</span>
-          <span><span class="br-val" id="sc-bd-parts">—</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Labor</span>
-          <span><span class="br-val" id="sc-bd-labor">—</span></span>
-        </div>
-        <div class="divider"></div>
-        <div class="breakdown-row" style="font-size:15px">
-          <span class="br-label" style="font-weight:700;color:var(--gold)">Total Cost</span>
-          <span><span class="br-val" id="sc-bd-total" style="color:var(--gold)">—</span></span>
-        </div>
-        <div class="breakdown-row" style="font-size:15px">
-          <span class="br-label" style="font-weight:700;color:var(--green-light)">Gross Profit</span>
-          <span><span class="br-val" id="sc-bd-gp" style="color:var(--green-light)">—</span><span class="br-pct" id="sc-bd-gp-pct" style="color:var(--green-light)"></span></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- QUOTE BUILDER TAB (Good/Better/Best) -->
-    <div id="tab-quoter" class="scroll-content" style="display:none">
-      <div class="card-title">Quote Builder — Good / Better / Best</div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Use this when replacing equipment. Enter 3 system options to generate professional 3-tier quotes.</p>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">Equipment or System</div>
-        <input type="text" id="qb-title" placeholder="e.g., '2-Ton A/C System', 'Furnace Upgrade'" value="Equipment Replacement">
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">GOOD Option</div>
-        <div class="field-label" style="font-size:10px;margin-bottom:6px">Equipment/Labor Cost</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="qb-good-cost" placeholder="0" value="3500" style="flex:1">
-        </div>
-        <input type="text" id="qb-good-desc" placeholder="Description (e.g., 'Standard 80% furnace')" value="Standard Equipment + Labor" style="width:100%;margin-bottom:8px;padding:9px 12px;font-size:13px">
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">BETTER Option</div>
-        <div class="field-label" style="font-size:10px;margin-bottom:6px">Equipment/Labor Cost</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="qb-better-cost" placeholder="0" value="5200" style="flex:1">
-        </div>
-        <input type="text" id="qb-better-desc" placeholder="Description (e.g., '95% furnace + extras')" value="Mid-Grade Equipment + Labor" style="width:100%;margin-bottom:8px;padding:9px 12px;font-size:13px">
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">BEST Option</div>
-        <div class="field-label" style="font-size:10px;margin-bottom:6px">Equipment/Labor Cost</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="qb-best-cost" placeholder="0" value="7200" style="flex:1">
-        </div>
-        <input type="text" id="qb-best-desc" placeholder="Description (e.g., 'Premium high-efficiency')" value="Premium Equipment + Labor" style="width:100%;margin-bottom:8px;padding:9px 12px;font-size:13px">
-      </div>
-      
-      <div class="card">
-        <button class="btn btn-primary" onclick="generateQuote3Tier()">📊 Generate 3-Tier Quote</button>
-      </div>
-      
-      <div id="qb-results" style="display:none">
-        <div class="card-title" style="margin-top:12px">Quote Summary</div>
-        <div id="qb-result-cards"></div>
-        <div style="display:flex;gap:10px;margin-top:12px">
-          <button class="btn btn-secondary btn-sm" onclick="saveQuote3Tier()">💾 Save All 3 to Tracker</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearQuote3Tier()">Clear</button>
-        </div>
-      </div>
-    </div>
-
     <!-- SETTINGS TAB -->
     <div id="tab-settings" class="scroll-content" style="display:none">
       <div class="card-title">Settings</div>
@@ -609,7 +465,7 @@
         <button class="btn btn-secondary" onclick="goEditPricebook()" style="margin-bottom:8px">📝 Edit 191 Items</button>
         <button class="btn btn-ghost btn-sm" onclick="resetPricebook()" style="font-size:13px;padding:8px">↻ Reset to Defaults</button>
       <div style="text-align:center;padding:20px 0 8px;color:var(--text-dim);font-size:12px">
-        Cardinal Pricer v2.6 · T. Byrd's Heating and Air<br>Charlotte, NC · Built with ❤️ by Jarvis 🐦‍🔴
+        Cardinal Pricer v2.3 · T. Byrd's Heating and Air<br>Charlotte, NC · Built with ❤️ by Jarvis 🐦‍🔴
       </div>
     </div>
 
@@ -641,10 +497,6 @@
       <button class="nav-item" onclick="goTab('tracker')" id="nav-tracker">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Tracker
       </button>
-      <button class="nav-item" onclick="goTab('servicecall')" id="nav-servicecall">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Service
-      </button>
-      
       <button class="nav-item" onclick="goTab('settings')" id="nav-settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings
       </button>
@@ -654,8 +506,8 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════
-// CARDINAL PRICER v2.6 — T. Byrd's Heating and Air
-// Smart Multipliers | Floor Prices | Enhanced Pricebook
+// CARDINAL PRICER v2.0 — T. Byrd's Heating and Air
+// Built-Up Pricing Engine | 3 Modes | Full Pricebook
 // ═══════════════════════════════════════════════════════════
 
 // T. BYRD'S PRICEBOOK (from HCP export)
@@ -679,10 +531,9 @@ const PRICEBOOK = [
   {cat:'Refrigerant',name:'R-22 Recharge (up to 4 lbs)',price:1127},
   {cat:'Refrigerant',name:'R-410A Recharge (up to 3 lbs)',price:475},
   {cat:'Refrigerant',name:'R-410A Recharge (up to 6 lbs)',price:857},
-  {cat:'Refrigerant',name:'R-454B Refrigerant (per lb)',price:110},
+  {cat:'Refrigerant',name:'R-454B Refrigerant (per lb)',price:189},
   {cat:'Refrigerant',name:'A/C Renew Oil Treatment',price:559},
   {cat:'Refrigerant',name:'Sealant / Dye-Pack',price:371},
-  {cat:'Refrigerant',name:'TXV / EEV Replacement',price:595},
   {cat:'Refrigerant',name:'Refrigerant Line Set Install',price:1284},
   // High Voltage
   {cat:'High Voltage',name:'Main Motor Starter (Dual Run Capacitor)',price:468},
@@ -702,9 +553,7 @@ const PRICEBOOK = [
   {cat:'Thermostats',name:'Honeywell T6 Pro Thermostat',price:697},
   {cat:'Thermostats',name:'Honeywell T4 Programmable',price:199},
   {cat:'Thermostats',name:'Zone Control System',price:1100},
-  {cat:'Controls',name:'Control Board (Universal)',price:750},
   // Air Movement
-  {cat:'Air Movement',name:'Blower Motor (PSC, 0.5-0.75 HP)',price:595},
   {cat:'Air Movement',name:'Universal Outdoor Fan Motor',price:1144},
   // Plumbing / Drainage
   {cat:'Drainage',name:'Water Removal Pump (Condensate)',price:460},
@@ -910,11 +759,9 @@ function enterApp() {
 }
 
 function goTab(tab) {
-  ['home','pricer','quoter','pricebook','servicecall','tracker','settings'].forEach(t=>{
-    const tabEl = document.getElementById('tab-'+t);
-    const navEl = document.getElementById('nav-'+t);
-    if(tabEl) tabEl.style.display=t===tab?'':'none';
-    if(navEl) navEl.classList.toggle('active',t===tab);
+  ['home','pricer','pricebook','tracker','settings'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'':'none';
+    document.getElementById('nav-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='tracker') updateTracker();
   if(tab==='pricebook') renderFullPB();
@@ -992,16 +839,6 @@ function calcP() {
   if (pMode==='buildup') r = calcBuildUp(cost, matPct);
   else r = calcMultiplier(cost);
   lastCalc = r;
-  
-  // Show tiered multiplier suggestion only in multiplier mode
-  if (pMode === 'multiplier') {
-    const suggestion = getSuggestedMultiplier(cost);
-    showMultiplierSuggestion(cost, suggestion);
-  } else {
-    const suggBox = document.getElementById('multiplier-suggestion');
-    if (suggBox) suggBox.style.display = 'none';
-  }
-  
   showResult(r);
 }
 
@@ -1011,41 +848,7 @@ function showResult(r) {
   document.getElementById('p-gp-pct').textContent = '◎ ' + Math.round(r.gpPct) + '% GP';
   const modeLabels = { buildup: '🧮 Build-Up pricing', flatrate: '📋 T. Byrd\'s flat rate', multiplier: '✖️ ' + S.multiplier + '× part cost' };
   document.getElementById('p-mode-label').textContent = modeLabels[r.mode] || '';
-  
-  // Add floor price warning for multiplier mode
-  const resultBox = document.getElementById('p-result');
-  let floorHTML = '';
-  if (r.mode === 'multiplier') {
-    const cost = parseFloat(document.getElementById('p-cost').value) || 0;
-    const floor = calcFloorPrice(cost);
-    floorHTML = `<div style="font-size:11px;color:var(--orange);margin-top:8px">⚠️ Never go below: ${fmt(floor)}</div>`;
-    // Highlight if price is below floor
-    if (r.sell < floor) {
-      resultBox.style.borderColor = 'var(--orange)';
-    } else {
-      resultBox.style.borderColor = 'var(--red)';
-    }
-  } else {
-    resultBox.style.borderColor = 'var(--red)';
-  }
-  
   document.getElementById('p-result').style.display = '';
-  
-  // Insert floor price after GP tags if in multiplier mode
-  if (floorHTML) {
-    const tagsContainer = document.querySelector('.result-tags');
-    let floorContainer = document.getElementById('floor-price-display');
-    if (!floorContainer) {
-      floorContainer = document.createElement('div');
-      floorContainer.id = 'floor-price-display';
-      tagsContainer.parentNode.insertBefore(floorContainer, tagsContainer.nextSibling);
-    }
-    floorContainer.innerHTML = floorHTML;
-  } else {
-    const floorContainer = document.getElementById('floor-price-display');
-    if (floorContainer) floorContainer.innerHTML = '';
-  }
-  
   updateBreakdown(r);
 }
 
@@ -1069,46 +872,6 @@ function updateBreakdown(r) {
 function copyP() {
   const v = document.getElementById('p-sell').textContent;
   navigator.clipboard.writeText(v.replace(/[$,]/g,'')).then(()=>toast('Price copied! '+v)).catch(()=>toast(v));
-}
-
-// ─── TIERED MULTIPLIER SUGGESTIONS ───
-function getSuggestedMultiplier(cost) {
-  if (cost <= 20) return { multi: 3.5, range: [3.0, 4.0], reason: 'Small part — high labor ratio' };
-  if (cost <= 75) return { multi: 3.0, range: [2.8, 3.2], reason: 'Mid-small part' };
-  if (cost <= 200) return { multi: 2.5, range: [2.2, 2.8], reason: 'Mid-range part' };
-  if (cost <= 500) return { multi: 1.9, range: [1.8, 2.2], reason: 'Larger part' };
-  return { multi: 1.5, range: [1.4, 1.8], reason: 'Equipment — margin over labor' };
-}
-
-function calcFloorPrice(cost) {
-  const varPct = (S.wages + S.ohPct) / 100;
-  const floor = cost * (1 + varPct);
-  return Math.ceil(floor / 5) * 5;
-}
-
-function showMultiplierSuggestion(cost, suggestion) {
-  const suggBox = document.getElementById('multiplier-suggestion');
-  if (!suggBox) return;
-  
-  const margin = Math.round((suggestion.multi - 1) / suggestion.multi * 100);
-  suggBox.querySelector('#multiplier-text').textContent = `For $${Math.round(cost)} part: Try ${suggestion.multi}x (${margin}% margin)`;
-  suggBox.querySelector('#multiplier-reason').textContent = suggestion.reason;
-  
-  const buttonContainer = suggBox.querySelector('#multiplier-buttons');
-  buttonContainer.innerHTML = suggestion.range.map(m => {
-    const sell = Math.round(cost * m);
-    return `<button class="btn btn-secondary btn-sm" style="font-size:12px;padding:7px 12px" onclick="applySuggestedMultiplier(${m})">${m}x → $${sell}</button>`;
-  }).join('');
-  
-  suggBox.style.display = '';
-}
-
-function applySuggestedMultiplier(newMulti) {
-  S.multiplier = newMulti;
-  saveS();
-  document.getElementById('s-multiplier').value = newMulti;
-  calcP();
-  toast('Multiplier set to ' + newMulti + 'x');
 }
 
 // ─── PRICEBOOK ───
@@ -1249,225 +1012,6 @@ function saveS() {
 function fmt(n){if(!n&&n!==0)return'—';return'$'+Math.round(n).toLocaleString();}
 function fmtK(n){if(!n&&n!==0)return'$0';if(Math.abs(n)>=1000)return'$'+(n/1000).toFixed(1)+'k';return'$'+Math.round(n);}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
-
-
-// ─── SERVICE CALL ───
-let scItems = [];
-
-function addSCItem() {
-  scItems.push({id: Date.now(), desc: '', cost: 0, hours: 0});
-  renderSCItems();
-}
-
-function removeSCItem(id) {
-  scItems = scItems.filter(i => i.id !== id);
-  renderSCItems();
-  calcSC();
-}
-
-function renderSCItems() {
-  const list = document.getElementById('sc-items-list');
-  if (!scItems.length) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No items. Tap + to add.</div>';
-    return;
-  }
-  list.innerHTML = scItems.map(item => `
-    <div style="background:var(--navy-mid);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border)">
-      <input type="text" placeholder="Part or labor description" value="${item.desc}" onchange="updateSCItem(${item.id},'desc',this.value);calcSC()" style="width:100%;margin-bottom:8px;padding:8px;background:var(--navy);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">COST</div><div style="display:flex;align-items:center;gap:4px"><span style="color:var(--text-muted)">$</span><input type="number" value="${item.cost}" onchange="updateSCItem(${item.id},'cost',parseFloat(this.value));calcSC()" style="flex:1;padding:6px;background:var(--navy);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px"></div></div>
-        <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">HOURS</div><input type="number" step="0.5" value="${item.hours}" onchange="updateSCItem(${item.id},'hours',parseFloat(this.value));calcSC()" style="width:100%;padding:6px;background:var(--navy);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px"></div>
-      </div>
-      <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:6px 10px" onclick="removeSCItem(${item.id})">Remove</button>
-    </div>
-  `).join('');
-}
-
-function updateSCItem(id, field, value) {
-  const item = scItems.find(i => i.id === id);
-  if (item) item[field] = value;
-}
-
-function calcSC() {
-  const diag = parseFloat(document.getElementById('sc-diag')?.value) || 0;
-  const labRate = parseFloat(document.getElementById('sc-labor-rate')?.value) || 150;
-  let partsCost = 0, laborCost = 0;
-  scItems.forEach(item => {
-    partsCost += item.cost || 0;
-    laborCost += (item.hours || 0) * labRate;
-  });
-  const totalCost = diag + partsCost + laborCost;
-  if (totalCost <= 0) {
-    document.getElementById('sc-result').style.display = 'none';
-    return;
-  }
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  const sell = totalCost / (1 - 0.35 - varPct);
-  const gp = sell - totalCost;
-  const gpPct = gp / sell * 100;
-  document.getElementById('sc-sell').textContent = fmt(sell);
-  document.getElementById('sc-gp-tag').textContent = 'GP ' + fmt(gp);
-  document.getElementById('sc-gp-pct').textContent = Math.round(gpPct) + '%';
-  document.getElementById('sc-result').style.display = '';
-  document.getElementById('sc-bd-diag').textContent = fmt(diag);
-  document.getElementById('sc-bd-parts').textContent = fmt(partsCost);
-  document.getElementById('sc-bd-labor').textContent = fmt(laborCost);
-  document.getElementById('sc-bd-total').textContent = fmt(totalCost);
-  document.getElementById('sc-bd-gp').textContent = fmt(gp);
-  document.getElementById('sc-bd-gp-pct').textContent = Math.round(gpPct) + '%';
-}
-
-function showSCBreakdown() {
-  const bd = document.getElementById('sc-breakdown');
-  bd.style.display = bd.style.display === 'none' ? '' : 'none';
-}
-
-function copySC() {
-  const v = document.getElementById('sc-sell').textContent;
-  navigator.clipboard.writeText(v.replace(/[$,]/g,'')).then(()=>toast('Copied: '+v)).catch(()=>toast(v));
-}
-
-function saveSCJob() {
-  const diag = parseFloat(document.getElementById('sc-diag')?.value) || 0;
-  const labRate = parseFloat(document.getElementById('sc-labor-rate')?.value) || 150;
-  let partsCost = 0, laborCost = 0;
-  scItems.forEach(item => {partsCost += item.cost || 0;laborCost += (item.hours || 0) * labRate;});
-  const totalCost = diag + partsCost + laborCost;
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  const sell = totalCost / (1 - 0.35 - varPct);
-  const gp = sell - totalCost;
-  const desc = scItems.map(i => i.desc).filter(d => d).join(", ") || "Service Call";
-  S.jobs.push({date: new Date().toISOString(),customer: "Field Service",desc, sell, gp, cost: totalCost,status: "Completed"});
-  persist();
-  updateHome();
-  toast("Job saved!");
-}
-
-
-
-// ─── QUICK REPAIRS ───
-function loadQuickRepair(name, cost) {
-  document.getElementById('p-cost').value = cost;
-  document.getElementById('p-desc').value = name;
-  document.getElementById('mat-15').click();
-  calcP();
-  toast(name + ' loaded ($' + cost + ')');
-}
-
-// ─── QUOTE BUILDER (Good/Better/Best) ───
-let qb3Tier = null;
-
-function generateQuote3Tier() {
-  const title = document.getElementById('qb-title').value || 'Equipment Replacement';
-  const goodCost = parseFloat(document.getElementById('qb-good-cost').value) || 0;
-  const betterCost = parseFloat(document.getElementById('qb-better-cost').value) || 0;
-  const bestCost = parseFloat(document.getElementById('qb-best-cost').value) || 0;
-  
-  const goodDesc = document.getElementById('qb-good-desc').value || 'Good Option';
-  const betterDesc = document.getElementById('qb-better-desc').value || 'Better Option';
-  const bestDesc = document.getElementById('qb-best-desc').value || 'Best Option';
-  
-  if (goodCost <= 0 || betterCost <= 0 || bestCost <= 0) {
-    toast('All costs must be greater than 0');
-    return;
-  }
-  
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  
-  const calc3Tier = (cost) => {
-    const sell = cost / (1 - 0.35 - varPct);
-    const gp = sell - cost;
-    const gpPct = gp / sell * 100;
-    return { sell, gp, gpPct };
-  };
-  
-  const good = calc3Tier(goodCost);
-  const better = calc3Tier(betterCost);
-  const best = calc3Tier(bestCost);
-  
-  qb3Tier = { title, goodDesc, betterDesc, bestDesc, goodCost, betterCost, bestCost, good, better, best };
-  
-  const res = document.getElementById('qb-result-cards');
-  res.innerHTML = `
-    <div class="card" style="border-color: var(--text-muted)">
-      <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">${title}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div style="background:var(--navy-mid);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">GOOD</div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:2px">${fmt(good.sell)}</div>
-          <div style="font-size:10px;color:var(--green-light)">+${fmt(good.gp)}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${goodDesc}</div>
-        </div>
-        <div style="background:var(--navy-mid);border-radius:8px;padding:12px;text-align:center;border:1.5px solid var(--red)">
-          <div style="font-size:10px;color:var(--red);margin-bottom:4px;font-weight:700">BETTER ⭐</div>
-          <div style="font-size:22px;font-weight:700;margin-bottom:2px;color:var(--red)">${fmt(better.sell)}</div>
-          <div style="font-size:10px;color:var(--green-light)">+${fmt(better.gp)}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${betterDesc}</div>
-        </div>
-        <div style="background:var(--navy-mid);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">BEST</div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:2px">${fmt(best.sell)}</div>
-          <div style="font-size:10px;color:var(--green-light)">+${fmt(best.gp)}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${bestDesc}</div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('qb-results').style.display = '';
-  toast('3-tier quote generated');
-}
-
-function saveQuote3Tier() {
-  if (!qb3Tier) { toast('Generate a quote first'); return; }
-  
-  const { title, goodDesc, betterDesc, bestDesc, goodCost, betterCost, bestCost, good, better, best } = qb3Tier;
-  const now = new Date().toISOString();
-  
-  S.jobs.push({
-    date: now,
-    customer: title,
-    desc: 'GOOD: ' + goodDesc + ' | $' + Math.round(good.sell),
-    sell: good.sell,
-    gp: good.gp,
-    cost: goodCost,
-    status: 'Quoted'
-  });
-  
-  S.jobs.push({
-    date: now,
-    customer: title,
-    desc: 'BETTER: ' + betterDesc + ' | $' + Math.round(better.sell),
-    sell: better.sell,
-    gp: better.gp,
-    cost: betterCost,
-    status: 'Quoted'
-  });
-  
-  S.jobs.push({
-    date: now,
-    customer: title,
-    desc: 'BEST: ' + bestDesc + ' | $' + Math.round(best.sell),
-    sell: best.sell,
-    gp: best.gp,
-    cost: bestCost,
-    status: 'Quoted'
-  });
-  
-  persist();
-  updateHome();
-  toast('All 3 quotes saved to Tracker');
-}
-
-function clearQuote3Tier() {
-  qb3Tier = null;
-  document.getElementById('qb-results').style.display = 'none';
-  document.getElementById('qb-title').value = 'Equipment Replacement';
-  document.getElementById('qb-good-cost').value = '3500';
-  document.getElementById('qb-better-cost').value = '5200';
-  document.getElementById('qb-best-cost').value = '7200';
-  toast('Cleared');
-}
 
 init();
 </script>

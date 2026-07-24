@@ -278,15 +278,8 @@
             <button class="cat-chip" id="mat-20" onclick="setMatPct(this,20)">20%</button>
           </div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Use 15% for labor-heavy jobs, 20% for parts-heavy jobs</div>
-        </div>
 
-      <!-- Tiered Multiplier Suggestion -->
-      <div id="multiplier-suggestion" style="margin-top:12px;padding:10px;background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.2);border-radius:8px;display:none">
-        <div class="field-label" style="color:var(--orange);margin-bottom:8px">💡 Suggested Multiplier</div>
-        <div id="multiplier-text" style="font-size:13px;color:var(--text);margin-bottom:10px">—</div>
-        <div id="multiplier-buttons" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px" id="multiplier-reason">—</div>
-      </div>
+      <!-- Quick Common Repairs -->
       <div class="card">
         <div class="field-label" style="margin-bottom:10px">⚡ Quick Common Repairs</div>
         <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Johnstone supplier costs (1-tap load):</p>
@@ -609,7 +602,7 @@
         <button class="btn btn-secondary" onclick="goEditPricebook()" style="margin-bottom:8px">📝 Edit 191 Items</button>
         <button class="btn btn-ghost btn-sm" onclick="resetPricebook()" style="font-size:13px;padding:8px">↻ Reset to Defaults</button>
       <div style="text-align:center;padding:20px 0 8px;color:var(--text-dim);font-size:12px">
-        Cardinal Pricer v2.6 · T. Byrd's Heating and Air<br>Charlotte, NC · Built with ❤️ by Jarvis 🐦‍🔴
+        Cardinal Pricer v2.3 · T. Byrd's Heating and Air<br>Charlotte, NC · Built with ❤️ by Jarvis 🐦‍🔴
       </div>
     </div>
 
@@ -654,8 +647,8 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════
-// CARDINAL PRICER v2.6 — T. Byrd's Heating and Air
-// Smart Multipliers | Floor Prices | Enhanced Pricebook
+// CARDINAL PRICER v2.5 — T. Byrd's Heating and Air
+// Built-Up Pricing Engine | 3 Modes | Quote Builder | Full Pricebook
 // ═══════════════════════════════════════════════════════════
 
 // T. BYRD'S PRICEBOOK (from HCP export)
@@ -679,10 +672,9 @@ const PRICEBOOK = [
   {cat:'Refrigerant',name:'R-22 Recharge (up to 4 lbs)',price:1127},
   {cat:'Refrigerant',name:'R-410A Recharge (up to 3 lbs)',price:475},
   {cat:'Refrigerant',name:'R-410A Recharge (up to 6 lbs)',price:857},
-  {cat:'Refrigerant',name:'R-454B Refrigerant (per lb)',price:110},
+  {cat:'Refrigerant',name:'R-454B Refrigerant (per lb)',price:189},
   {cat:'Refrigerant',name:'A/C Renew Oil Treatment',price:559},
   {cat:'Refrigerant',name:'Sealant / Dye-Pack',price:371},
-  {cat:'Refrigerant',name:'TXV / EEV Replacement',price:595},
   {cat:'Refrigerant',name:'Refrigerant Line Set Install',price:1284},
   // High Voltage
   {cat:'High Voltage',name:'Main Motor Starter (Dual Run Capacitor)',price:468},
@@ -702,9 +694,7 @@ const PRICEBOOK = [
   {cat:'Thermostats',name:'Honeywell T6 Pro Thermostat',price:697},
   {cat:'Thermostats',name:'Honeywell T4 Programmable',price:199},
   {cat:'Thermostats',name:'Zone Control System',price:1100},
-  {cat:'Controls',name:'Control Board (Universal)',price:750},
   // Air Movement
-  {cat:'Air Movement',name:'Blower Motor (PSC, 0.5-0.75 HP)',price:595},
   {cat:'Air Movement',name:'Universal Outdoor Fan Motor',price:1144},
   // Plumbing / Drainage
   {cat:'Drainage',name:'Water Removal Pump (Condensate)',price:460},
@@ -992,16 +982,6 @@ function calcP() {
   if (pMode==='buildup') r = calcBuildUp(cost, matPct);
   else r = calcMultiplier(cost);
   lastCalc = r;
-  
-  // Show tiered multiplier suggestion only in multiplier mode
-  if (pMode === 'multiplier') {
-    const suggestion = getSuggestedMultiplier(cost);
-    showMultiplierSuggestion(cost, suggestion);
-  } else {
-    const suggBox = document.getElementById('multiplier-suggestion');
-    if (suggBox) suggBox.style.display = 'none';
-  }
-  
   showResult(r);
 }
 
@@ -1011,41 +991,7 @@ function showResult(r) {
   document.getElementById('p-gp-pct').textContent = '◎ ' + Math.round(r.gpPct) + '% GP';
   const modeLabels = { buildup: '🧮 Build-Up pricing', flatrate: '📋 T. Byrd\'s flat rate', multiplier: '✖️ ' + S.multiplier + '× part cost' };
   document.getElementById('p-mode-label').textContent = modeLabels[r.mode] || '';
-  
-  // Add floor price warning for multiplier mode
-  const resultBox = document.getElementById('p-result');
-  let floorHTML = '';
-  if (r.mode === 'multiplier') {
-    const cost = parseFloat(document.getElementById('p-cost').value) || 0;
-    const floor = calcFloorPrice(cost);
-    floorHTML = `<div style="font-size:11px;color:var(--orange);margin-top:8px">⚠️ Never go below: ${fmt(floor)}</div>`;
-    // Highlight if price is below floor
-    if (r.sell < floor) {
-      resultBox.style.borderColor = 'var(--orange)';
-    } else {
-      resultBox.style.borderColor = 'var(--red)';
-    }
-  } else {
-    resultBox.style.borderColor = 'var(--red)';
-  }
-  
   document.getElementById('p-result').style.display = '';
-  
-  // Insert floor price after GP tags if in multiplier mode
-  if (floorHTML) {
-    const tagsContainer = document.querySelector('.result-tags');
-    let floorContainer = document.getElementById('floor-price-display');
-    if (!floorContainer) {
-      floorContainer = document.createElement('div');
-      floorContainer.id = 'floor-price-display';
-      tagsContainer.parentNode.insertBefore(floorContainer, tagsContainer.nextSibling);
-    }
-    floorContainer.innerHTML = floorHTML;
-  } else {
-    const floorContainer = document.getElementById('floor-price-display');
-    if (floorContainer) floorContainer.innerHTML = '';
-  }
-  
   updateBreakdown(r);
 }
 
@@ -1069,46 +1015,6 @@ function updateBreakdown(r) {
 function copyP() {
   const v = document.getElementById('p-sell').textContent;
   navigator.clipboard.writeText(v.replace(/[$,]/g,'')).then(()=>toast('Price copied! '+v)).catch(()=>toast(v));
-}
-
-// ─── TIERED MULTIPLIER SUGGESTIONS ───
-function getSuggestedMultiplier(cost) {
-  if (cost <= 20) return { multi: 3.5, range: [3.0, 4.0], reason: 'Small part — high labor ratio' };
-  if (cost <= 75) return { multi: 3.0, range: [2.8, 3.2], reason: 'Mid-small part' };
-  if (cost <= 200) return { multi: 2.5, range: [2.2, 2.8], reason: 'Mid-range part' };
-  if (cost <= 500) return { multi: 1.9, range: [1.8, 2.2], reason: 'Larger part' };
-  return { multi: 1.5, range: [1.4, 1.8], reason: 'Equipment — margin over labor' };
-}
-
-function calcFloorPrice(cost) {
-  const varPct = (S.wages + S.ohPct) / 100;
-  const floor = cost * (1 + varPct);
-  return Math.ceil(floor / 5) * 5;
-}
-
-function showMultiplierSuggestion(cost, suggestion) {
-  const suggBox = document.getElementById('multiplier-suggestion');
-  if (!suggBox) return;
-  
-  const margin = Math.round((suggestion.multi - 1) / suggestion.multi * 100);
-  suggBox.querySelector('#multiplier-text').textContent = `For $${Math.round(cost)} part: Try ${suggestion.multi}x (${margin}% margin)`;
-  suggBox.querySelector('#multiplier-reason').textContent = suggestion.reason;
-  
-  const buttonContainer = suggBox.querySelector('#multiplier-buttons');
-  buttonContainer.innerHTML = suggestion.range.map(m => {
-    const sell = Math.round(cost * m);
-    return `<button class="btn btn-secondary btn-sm" style="font-size:12px;padding:7px 12px" onclick="applySuggestedMultiplier(${m})">${m}x → $${sell}</button>`;
-  }).join('');
-  
-  suggBox.style.display = '';
-}
-
-function applySuggestedMultiplier(newMulti) {
-  S.multiplier = newMulti;
-  saveS();
-  document.getElementById('s-multiplier').value = newMulti;
-  calcP();
-  toast('Multiplier set to ' + newMulti + 'x');
 }
 
 // ─── PRICEBOOK ───
