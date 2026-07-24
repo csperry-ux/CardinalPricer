@@ -1,1475 +1,446 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cardinal Pricer — T. Byrd's Heating and Air</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --red: #C41E3A; --red-dark: #9B1630; --red-light: #E8304D;
-      --navy: #0D1520; --navy-mid: #162032; --card: #1C2B3F; --card-light: #243347;
-      --text: #EBF0F7; --text-muted: #7A93B0; --text-dim: #4A6280;
-      --border: #2A3D54; --green: #27AE60; --green-light: #2ECC71;
-      --orange: #E67E22; --gold: #F1C40F; --radius: 14px; --radius-sm: 8px;
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        background: linear-gradient(135deg, #1a472a 0%, #2d5f3f 50%, #3d3d3d 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
     }
-    html, body { height: 100%; background: var(--navy); color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow: hidden; }
-    #app { display: flex; flex-direction: column; height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; overflow: hidden; }
-    .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-    .screen.active { display: flex; }
-    .app-header { background: var(--navy-mid); padding: 14px 18px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-    .company-name { font-size: 15px; font-weight: 700; }
-    .header-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .cardinal-dot { width: 10px; height: 10px; background: var(--red); border-radius: 50%; margin-top: 4px; }
-    .bottom-nav { display: flex; background: var(--navy-mid); border-top: 1px solid var(--border); flex-shrink: 0; }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 12px; cursor: pointer; gap: 4px; border: none; background: none; color: var(--text-muted); font-size: 10px; transition: color .15s; }
-    .nav-item.active { color: var(--red); }
-    .nav-item svg { width: 22px; height: 22px; }
-    .scroll-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; padding-bottom: 24px; }
-    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
-    .card-title { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
-    .field-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-    input[type="text"], input[type="number"], select { width: 100%; background: var(--navy-mid); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 11px 12px; color: var(--text); font-size: 15px; outline: none; -webkit-appearance: none; transition: border-color .15s; }
-    input:focus, select:focus { border-color: var(--red); }
-    .field-group { margin-bottom: 14px; }
-    .price-input-wrap { display: flex; align-items: center; background: var(--navy-mid); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; transition: border-color .15s; }
-    .price-input-wrap:focus-within { border-color: var(--red); }
-    .price-input-wrap .currency { font-size: 20px; color: var(--text-muted); margin-right: 6px; }
-    .price-input-wrap input { background: none; border: none; padding: 14px 0; font-size: 28px; font-weight: 700; color: var(--text); flex: 1; }
-    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; border: none; cursor: pointer; transition: opacity .15s, transform .1s; width: 100%; text-align: center; }
-    .btn:active { transform: scale(.97); opacity: .9; }
-    .btn-primary { background: var(--red); color: white; }
-    .btn-secondary { background: var(--card-light); color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost { background: none; color: var(--text-muted); border: 1.5px solid var(--border); }
-    .btn-green { background: var(--green); color: white; }
-    .btn-sm { padding: 9px 16px; font-size: 13px; }
-    .btn-row { display: flex; gap: 10px; }
-    .btn-row .btn { flex: 1; }
-    .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
-    .mode-btn { padding: 12px 6px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; border: 1.5px solid var(--border); background: var(--navy-mid); color: var(--text-muted); cursor: pointer; text-align: center; transition: all .15s; line-height: 1.3; }
-    .mode-btn.active { background: var(--red); border-color: var(--red); color: white; }
-    .mode-btn .mode-icon { font-size: 18px; display: block; margin-bottom: 4px; }
-    .cat-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-    .cat-row::-webkit-scrollbar { display: none; }
-    .cat-chip { white-space: nowrap; padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--border); background: var(--navy-mid); color: var(--text-muted); cursor: pointer; flex-shrink: 0; transition: all .15s; }
-    .cat-chip.active { background: var(--red); border-color: var(--red); color: white; }
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    .stat-box { background: var(--navy-mid); border-radius: var(--radius-sm); padding: 14px; border: 1px solid var(--border); }
-    .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 6px; }
-    .stat-val { font-size: 22px; font-weight: 800; color: var(--text); }
-    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .result-box { background: var(--navy-mid); border-radius: var(--radius); border: 2px solid var(--red); padding: 20px; text-align: center; margin: 12px 0; }
-    .result-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 8px; }
-    .result-price { font-size: 48px; font-weight: 900; color: var(--text); letter-spacing: -.02em; }
-    .result-mode { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
-    .result-tags { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
-    .result-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(39,174,96,.15); color: var(--green-light); border-radius: 99px; padding: 5px 14px; font-size: 13px; font-weight: 600; }
-    .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(42,61,84,.5); font-size: 13px; }
-    .breakdown-row:last-child { border-bottom: none; }
-    .br-label { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-    .br-val { font-weight: 600; }
-    .br-pct { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
-    .br-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(122,147,176,.1); color: var(--text-muted); }
-    .br-tag.v { background: rgba(196,30,58,.1); color: var(--red-light); }
-    .gp-bar-wrap { background: var(--navy); border-radius: 99px; height: 8px; overflow: hidden; margin: 12px 0 6px; }
-    .gp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-light)); border-radius: 99px; transition: width .5s ease; }
-    .gp-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); }
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
-    .toggle-row:last-child { border-bottom: none; }
-    .toggle-title { font-size: 14px; font-weight: 500; }
-    .toggle-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
-    .settings-row:last-child { border-bottom: none; }
-    .sr-label { font-size: 14px; font-weight: 500; }
-    .sr-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .settings-row input { width: auto; max-width: 110px; text-align: right; padding: 7px 10px; font-size: 14px; }
-    .divider { height: 1px; background: var(--border); margin: 12px 0; }
-    .section-hdr { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); padding: 4px 0 8px; }
-    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .5; }
-    .empty-state h3 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-    .empty-state p { font-size: 14px; line-height: 1.6; }
-    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card-light); color: var(--text); border: 1px solid var(--border); padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; white-space: nowrap; z-index: 100; }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .back-btn { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--red); font-weight: 500; background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 14px; }
-    .sticky-bar { background: var(--navy-mid); border-top: 2px solid var(--border); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .sticky-label { font-size: 11px; color: var(--text-muted); }
-    .sticky-val { font-size: 20px; font-weight: 800; }
-    .li-badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-    .li-badge.quoted { background: rgba(241,196,15,.15); color: var(--gold); }
-    .li-badge.sold { background: rgba(39,174,96,.15); color: var(--green-light); }
-    .li-badge.completed { background: rgba(122,147,176,.15); color: var(--text-muted); }
-    .list-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
-    .list-item:last-child { border-bottom: none; }
-    .li-main { font-size: 14px; font-weight: 600; }
-    .li-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .li-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
-    .li-val { font-size: 15px; font-weight: 700; }
-    .market-card { border-color: rgba(196,30,58,.3) !important; }
-    .market-title { color: var(--red) !important; }
-    .pricebook-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(42,61,84,.4); font-size: 13px; cursor: pointer; }
-    .pricebook-item:last-child { border-bottom: none; }
-    .pricebook-item:hover { opacity: .8; }
-    .pricebook-name { flex: 1; color: var(--text); }
-    .pricebook-price { font-weight: 700; color: var(--green-light); margin-left: 12px; }
-    .pricebook-arrow { color: var(--text-dim); margin-left: 8px; font-size: 12px; }
-    /* PIN */
-    #screen-pin { background: var(--navy); align-items: center; justify-content: center; }
-    .pin-logo { text-align: center; margin-bottom: 36px; }
-    .bird-icon { width: 72px; height: 72px; background: var(--red); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 38px; }
-    .pin-logo h1 { font-size: 26px; font-weight: 900; letter-spacing: -.02em; }
-    .pin-logo .pin-company { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-    .pin-dots { display: flex; gap: 16px; justify-content: center; margin-bottom: 32px; }
-    .pin-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border); transition: background .15s; }
-    .pin-dot.filled { background: var(--red); }
-    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 24px; width: 100%; max-width: 340px; }
-    .pin-key { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; font-size: 22px; font-weight: 600; color: var(--text); cursor: pointer; text-align: center; transition: background .1s, transform .1s; }
-    .pin-key:active { background: var(--red); transform: scale(.95); }
-    .pin-key.del { font-size: 18px; color: var(--text-muted); }
-    .pin-error { color: var(--red-light); font-size: 13px; text-align: center; margin-top: 14px; min-height: 20px; }
-    #screen-onboard { background: var(--navy); padding: 40px 24px; justify-content: center; }
-    .info-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-    .pill-green { background: rgba(39,174,96,.15); color: var(--green-light); }
-    .pill-orange { background: rgba(230,126,34,.15); color: var(--orange); }
-    .pill-red { background: rgba(196,30,58,.15); color: var(--red-light); }
-  </style>
+        
+    .container {
+        background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+        border-radius: 16px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(196, 30, 58, 0.2);
+        max-width: 650px;
+        width: 100%;
+        padding: 50px;
+    }
+        
+    .header {
+        text-align: center;
+        margin-bottom: 35px;
+        border-bottom: 3px solid #C41E3A;
+        padding-bottom: 25px;
+    }
+        
+    .header img {
+        max-width: 200px;
+        height: auto;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+        
+    .header h1 {
+        color: #1a472a;
+        font-size: 32px;
+        margin-bottom: 8px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+        
+    .header p {
+        color: #C41E3A;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+        
+    .form-group {
+        margin-bottom: 24px;
+    }
+        
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #1a472a;
+        font-size: 14px;
+        letter-spacing: 0.3px;
+    }
+        
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+        
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #C41E3A;
+        box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.15), inset 0 0 0 1px rgba(196, 30, 58, 0.1);
+        background: #fff;
+    }
+        
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+        line-height: 1.5;
+    }
+        
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+        
+    .form-row.full {
+        grid-template-columns: 1fr;
+    }
+        
+    .conditional-field {
+        display: none;
+    }
+        
+    .conditional-field.show {
+        display: block;
+    }
+        
+    .button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 40px;
+    }
+        
+    button {
+        flex: 1;
+        padding: 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+        
+    .btn-submit {
+        background: linear-gradient(135deg, #C41E3A 0%, #9B1630 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+    }
+        
+    .btn-submit:hover {
+        background: linear-gradient(135deg, #9B1630 0%, #7a1025 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(196, 30, 58, 0.4);
+    }
+        
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+        
+    .btn-reset {
+        background: #1a472a;
+        color: white;
+        box-shadow: 0 4px 15px rgba(26, 71, 42, 0.2);
+    }
+        
+    .btn-reset:hover {
+        background: #0d2e1a;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(26, 71, 42, 0.3);
+    }
+        
+    .btn-reset:active {
+        transform: translateY(0);
+    }
+        
+    .success-message {
+        display: none;
+        background: linear-gradient(135deg, #1a472a 0%, #2d5f3f 100%);
+        border: 2px solid #4caf50;
+        color: #ffffff;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        text-align: center;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+    }
+        
+    .success-message.show {
+        display: block;
+        animation: slideIn 0.3s ease;
+    }
+        
+    .error-message {
+        display: none;
+        background: linear-gradient(135deg, #C41E3A 0%, #9B1630 100%);
+        border: 2px solid #f44336;
+        color: #ffffff;
+        padding: 18px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        text-align: center;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(196, 30, 58, 0.2);
+    }
+        
+    .error-message.show {
+        display: block;
+        animation: slideIn 0.3s ease;
+    }
+        
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+        
+    .required {
+        color: #C41E3A;
+        font-weight: 700;
+    }
+        
+    .instructions {
+        background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+        border-left: 4px solid #C41E3A;
+        padding: 16px 18px;
+        border-radius: 6px;
+        margin-bottom: 30px;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.6;
+        box-shadow: 0 2px 8px rgba(196, 30, 58, 0.1);
+    }
+        
+    @media (max-width: 640px) {
+        .container {
+            padding: 30px;
+        }
+            
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+            
+        .header h1 {
+            font-size: 26px;
+        }
+    }
+</style>
 </head>
 <body>
-<div id="app">
-  <div class="toast" id="toast"></div>
-
-  <!-- ONBOARD -->
-  <div class="screen" id="screen-onboard">
-    <div style="text-align:center;margin-bottom:36px">
-      <div class="bird-icon" style="margin:0 auto 14px">🐦‍🔴</div>
-      <h1 style="font-size:26px;font-weight:900">Cardinal Pricer</h1>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:4px">T. Byrd's Heating and Air</div>
+    <div class="container">
+        <div class="header">
+            <img src="/tbyrd-logo.jpg" alt="T. Byrd's Heating & Cooling" style="max-width: 200px; height: auto; margin-bottom: 20px;">
+            <h1>HVAC Install Pipeline</h1>
+            <p>T. Byrd's Heating & Cooling</p>
+        </div>
+        
+        <div class="instructions">
+            <strong>Instructions:</strong> Fill out all required fields (<span class="required">*</span>) to log a new sold job. The data will be automatically saved to the shared pipeline.
+        </div>
+        
+        <div class="success-message" id="successMsg">
+            ✅ Job added successfully! Ready for next entry.
+        </div>
+        
+        <div class="error-message" id="errorMsg">
+            ❌ Error saving job. Please try again or contact support.
+        </div>
+        
+        <form id="jobForm">
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="customerName">Customer Name <span class="required">*</span></label>
+                    <input type="text" id="customerName" name="customerName" required placeholder="e.g., Sebastian Moronta">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dateSold">Date Sold <span class="required">*</span></label>
+                    <input type="date" id="dateSold" name="dateSold" required>
+                </div>
+                <div class="form-group">
+                    <label for="installDate">Install Date <span class="required">*</span></label>
+                    <input type="date" id="installDate" name="installDate" required>
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" placeholder="Customer address">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="text" id="phone" name="phone" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label for="jobNumber">Job #</label>
+                    <input type="text" id="jobNumber" name="jobNumber" placeholder="HCP Job #">
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="equipment">Equipment Sold <span class="required">*</span></label>
+                    <textarea id="equipment" name="equipment" required placeholder="e.g., 2.5 ton Heat Pump, 3 Ton Air Handler, etc."></textarea>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="leadSource">Lead Source <span class="required">*</span></label>
+                    <select id="leadSource" name="leadSource" required>
+                        <option value="">-- Select --</option>
+                        <option value="Marketed">Marketed</option>
+                        <option value="Tech Turnover (TTO)">Tech Turnover (TTO)</option>
+                    </select>
+                </div>
+                <div class="form-group conditional-field" id="techField">
+                    <label for="techName">Which Tech? <span class="required">*</span></label>
+                    <select id="techName" name="techName">
+                        <option value="">-- Select --</option>
+                        <option value="Christian">Christian</option>
+                        <option value="Terry">Terry</option>
+                        <option value="PJ">PJ</option>
+                        <option value="Joao">Joao</option>
+                        <option value="Steph">Steph</option>
+                        <option value="Brandon">Brandon</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method <span class="required">*</span></label>
+                    <select id="paymentMethod" name="paymentMethod" required>
+                        <option value="">-- Select --</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Check">Check</option>
+                        <option value="GreenSky">GreenSky</option>
+                        <option value="Fastlane">Fastlane</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount <span class="required">*</span></label>
+                    <input type="number" id="amount" name="amount" required placeholder="0.00" step="0.01" min="0">
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" placeholder="Any special instructions or notes (optional)"></textarea>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn-submit">Submit Job</button>
+                <button type="reset" class="btn-reset">Clear</button>
+            </div>
+        </form>
     </div>
-    <div id="ob-step-1">
-      <div class="card-title">Set up your company</div>
-      <div class="field-group">
-        <div class="field-label">Company Name</div>
-        <input type="text" id="ob-company" value="T. Byrd's Heating and Air">
-      </div>
-      <div class="field-group">
-        <div class="field-label">Location</div>
-        <input type="text" id="ob-location" value="Charlotte, NC">
-      </div>
-      <button class="btn btn-primary" onclick="obNext(1)">Continue →</button>
-    </div>
-    <div id="ob-step-2" style="display:none">
-      <div class="card-title">Choose your admin PIN</div>
-      <div class="field-group">
-        <div class="field-label">4-Digit PIN</div>
-        <input type="number" id="ob-pin" placeholder="e.g. 4695" inputmode="numeric">
-      </div>
-      <div class="field-group">
-        <div class="field-label">Confirm PIN</div>
-        <input type="number" id="ob-pin2" placeholder="Repeat PIN" inputmode="numeric">
-      </div>
-      <button class="btn btn-primary" onclick="obNext(2)">Launch Cardinal Pricer 🐦‍🔴</button>
-    </div>
-  </div>
-
-  <!-- PIN -->
-  <div class="screen" id="screen-pin">
-    <div class="pin-logo">
-      <div class="bird-icon">🐦‍🔴</div>
-      <h1>Cardinal Pricer</h1>
-      <div class="pin-company" id="pin-co-name">T. Byrd's Heating and Air</div>
-    </div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
-    </div>
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pk(1)">1</button><button class="pin-key" onclick="pk(2)">2</button><button class="pin-key" onclick="pk(3)">3</button>
-      <button class="pin-key" onclick="pk(4)">4</button><button class="pin-key" onclick="pk(5)">5</button><button class="pin-key" onclick="pk(6)">6</button>
-      <button class="pin-key" onclick="pk(7)">7</button><button class="pin-key" onclick="pk(8)">8</button><button class="pin-key" onclick="pk(9)">9</button>
-      <button class="pin-key" onclick="pk('skip')" style="font-size:12px;color:var(--text-muted)">Skip</button>
-      <button class="pin-key" onclick="pk(0)">0</button>
-      <button class="pin-key del" onclick="pdel()">⌫</button>
-    </div>
-    <div class="pin-error" id="pin-err"></div>
-  </div>
-
-  <!-- MAIN APP -->
-  <div class="screen" id="screen-app">
-    <div class="app-header">
-      <div class="header-row">
-        <div>
-          <div class="company-name" id="h-company">T. Byrd's Heating and Air</div>
-          <div class="header-sub">Cardinal Pricer · Charlotte, NC</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:12px;color:var(--text-muted)" id="h-month"></span>
-          <div class="cardinal-dot"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- HOME TAB -->
-    <div id="tab-home" class="scroll-content">
-      <button class="btn btn-primary" onclick="goTab('pricer')" style="font-size:17px;padding:17px;margin-bottom:14px">⚡ Price a Part or Job</button>
-      <div class="stat-grid">
-        <div class="stat-box">
-          <div class="stat-label">GP This Month</div>
-          <div class="stat-val" id="h-gp">$0</div>
-          <div class="stat-sub">of <span id="h-target">$50k</span> goal</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Jobs This Month</div>
-          <div class="stat-val" id="h-jobs">0</div>
-          <div class="stat-sub">logged</div>
-        </div>
-      </div>
-      <div class="card-title" style="margin-top:4px">Recent Jobs</div>
-      <div class="card" id="home-jobs-card">
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <h3>No jobs yet</h3>
-          <p>Tap ⚡ Price a Part or Job to get started.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRICER TAB -->
-    <div id="tab-pricer" class="scroll-content" style="display:none">
-      <div class="card-title">⚡ Cardinal Pricer</div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Enter supplier cost. Get your profitable sell price.</p>
-
-      <!-- Pricing Mode -->
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">Pricing Mode</div>
-        <div class="mode-grid">
-          <button class="mode-btn active" id="mode-btn-buildup" onclick="setMode('buildup')">
-            <span class="mode-icon">🧮</span>Build-Up
-          </button>
-          <button class="mode-btn" id="mode-btn-flatrate" onclick="setMode('flatrate')">
-            <span class="mode-icon">📋</span>Flat Rate
-          </button>
-          <button class="mode-btn" id="mode-btn-multiplier" onclick="setMode('multiplier')">
-            <span class="mode-icon">✖️</span>2.5× Part
-          </button>
-        </div>
-        <div id="mode-desc" style="font-size:12px;color:var(--text-muted);line-height:1.5;padding:8px;background:var(--navy-mid);border-radius:var(--radius-sm)">
-          🧮 <strong style="color:var(--text)">Build-Up:</strong> Calculates sell price by covering all costs — overhead (20%), wages (35%), warranty (7%), financing (5%), materials (15–20%) — leaving healthy GP. Best for most repair calls.
-        </div>
-      </div>
-
-      <!-- Supplier Cost -->
-      <div class="card" id="cost-input-card">
-        <div class="field-label">Supplier Cost (what you paid)</div>
-        <div class="price-input-wrap">
-          <span class="currency">$</span>
-          <input type="number" id="p-cost" placeholder="0.00" inputmode="decimal" oninput="calcP()">
-        </div>
-        <input type="text" id="p-desc" placeholder="Part or job description (optional)" style="margin-top:10px;font-size:13px;padding:9px 12px" oninput="calcP()">
-
-        <!-- Build-Up: materials % -->
-        <div id="materials-pct-row" style="margin-top:12px">
-          <div class="field-label" style="margin-bottom:8px">Materials as % of Job</div>
-          <div style="display:flex;gap:8px">
-            <button class="cat-chip active" id="mat-15" onclick="setMatPct(this,15)">15%</button>
-            <button class="cat-chip" id="mat-17" onclick="setMatPct(this,17)">17%</button>
-            <button class="cat-chip" id="mat-20" onclick="setMatPct(this,20)">20%</button>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Use 15% for labor-heavy jobs, 20% for parts-heavy jobs</div>
-        </div>
-
-      <!-- Tiered Multiplier Suggestion -->
-      <div id="multiplier-suggestion" style="margin-top:12px;padding:10px;background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.2);border-radius:8px;display:none">
-        <div class="field-label" style="color:var(--orange);margin-bottom:8px">💡 Suggested Multiplier</div>
-        <div id="multiplier-text" style="font-size:13px;color:var(--text);margin-bottom:10px">—</div>
-        <div id="multiplier-buttons" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px" id="multiplier-reason">—</div>
-      </div>
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">⚡ Quick Common Repairs</div>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Johnstone supplier costs (1-tap load):</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Capacitor',18)">Capacitor $18</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Contactor',32)">Contactor $32</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Blower Motor',145)">Blower Motor $145</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Control Board',120)">Control Board $120</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('TXV',65)">TXV $65</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadQuickRepair('Float Switch',12)">Float Switch $12</button>
-        </div>
-      </div>
-
-        </div>
-      </div>
-
-      <!-- Flat Rate: pricebook lookup -->
-      <div class="card" id="flatrate-card" style="display:none">
-        <div class="field-label" style="margin-bottom:8px">Search T. Byrd's Pricebook</div>
-        <input type="text" id="pb-search" placeholder="e.g. capacitor, drain, motor..." oninput="searchPB()" style="margin-bottom:12px">
-        <div id="pb-results" style="max-height:300px;overflow-y:auto"></div>
-      </div>
-
-      <!-- RESULT -->
-      <div class="result-box" id="p-result" style="display:none">
-        <div class="result-label">Charge the Customer</div>
-        <div class="result-price" id="p-sell">$0</div>
-        <div class="result-mode" id="p-mode-label"></div>
-        <div class="result-tags">
-          <div class="result-tag" id="p-gp-tag">✓ $0 GP</div>
-          <div class="result-tag" id="p-gp-pct">◎ 0% GP</div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
-          <button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 18px" onclick="copyP()">📋 Copy</button>
-          <button class="btn btn-secondary btn-sm" style="width:auto;padding:8px 18px" onclick="showBreakdown()">📊 Breakdown</button>
-        </div>
-      </div>
-
-      <!-- COST BREAKDOWN -->
-      <div class="card" id="p-breakdown" style="display:none">
-        <div class="card-title">Where Every Dollar Goes</div>
-        <div class="breakdown-row">
-          <span class="br-label">Materials / Parts <span class="br-tag">supplier cost</span></span>
-          <span><span class="br-val" id="bd-materials">—</span><span class="br-pct" id="bd-materials-pct"></span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Tech Wages <span class="br-tag v">35%</span></span>
-          <span><span class="br-val" id="bd-wages">—</span><span class="br-pct">35%</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Overhead <span class="br-tag v">20%</span></span>
-          <span><span class="br-val" id="bd-overhead">—</span><span class="br-pct">20%</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Warranty Reserve <span class="br-tag v">7%</span></span>
-          <span><span class="br-val" id="bd-warranty">—</span><span class="br-pct">7%</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Financing <span class="br-tag v">5%</span></span>
-          <span><span class="br-val" id="bd-financing">—</span><span class="br-pct">5%</span></span>
-        </div>
-        <div class="divider"></div>
-        <div class="breakdown-row" style="font-size:15px">
-          <span class="br-label" style="font-weight:700;color:var(--green-light)">Gross Profit 🐦‍🔴</span>
-          <span><span class="br-val" id="bd-gp" style="color:var(--green-light)">—</span><span class="br-pct" id="bd-gp-pct" style="color:var(--green-light)"></span></span>
-        </div>
-        <div class="gp-bar-wrap" style="margin-top:14px">
-          <div class="gp-bar-fill" id="bd-bar" style="width:0%"></div>
-        </div>
-        <div class="gp-bar-labels"><span>$0</span><span style="color:var(--green-light)">GP Target</span></div>
-      </div>
-
-      <!-- Market Reference -->
-      <div class="card market-card">
-        <div class="card-title market-title">📍 Charlotte NC Market Reference</div>
-        <div class="breakdown-row"><span class="br-label">Service / Diag call</span><span class="br-val">$77–$129</span></div>
-        <div class="breakdown-row"><span class="br-label">Dual run capacitor</span><span class="br-val">$189–$315</span></div>
-        <div class="breakdown-row"><span class="br-label">Contactor</span><span class="br-val">$175–$285</span></div>
-        <div class="breakdown-row"><span class="br-label">Blower motor (PSC)</span><span class="br-val">$450–$750</span></div>
-        <div class="breakdown-row"><span class="br-label">Control board</span><span class="br-val">$550–$950</span></div>
-        <div class="breakdown-row"><span class="br-label">R-410A (per lb)</span><span class="br-val">$75–$120</span></div>
-        <div class="breakdown-row"><span class="br-label">2-Ton system install</span><span class="br-val">$5,500–$8,500</span></div>
-      </div>
-    </div>
-
-    <!-- PRICEBOOK TAB -->
-    <div id="tab-pricebook" class="scroll-content" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div class="card-title" style="margin-bottom:0">T. Byrd's Pricebook</div>
-        <span style="font-size:11px;color:var(--text-muted)">191 items</span>
-      </div>
-      <input type="text" id="full-pb-search" placeholder="Search all items..." oninput="renderFullPB()" style="margin-bottom:12px">
-      <div id="pb-category-filter" class="cat-row" style="margin-bottom:12px"></div>
-      <div id="full-pb-list"></div>
-    </div>
-
-    <!-- TRACKER TAB -->
-    <div id="tab-tracker" class="scroll-content" style="display:none">
-      <div class="card-title">GP Tracker — <span id="t-month">June 2026</span></div>
-      <div class="card" style="background:var(--navy-mid)">
-        <div class="stat-grid" style="margin-bottom:0">
-          <div class="stat-box" style="background:var(--card)">
-            <div class="stat-label">GP This Month</div>
-            <div class="stat-val" id="t-gp">$0</div>
-            <div class="stat-sub" id="t-pct">0% of target</div>
-          </div>
-          <div class="stat-box" style="background:var(--card)">
-            <div class="stat-label">GP Target</div>
-            <div class="stat-val" id="t-target">$50,000</div>
-            <div class="stat-sub">monthly goal</div>
-          </div>
-          <div class="stat-box" style="background:var(--card)">
-            <div class="stat-label">Overhead</div>
-            <div class="stat-val" id="t-overhead">$30,000</div>
-            <div class="stat-sub" id="t-oh-status">not covered</div>
-          </div>
-          <div class="stat-box" style="background:var(--card)">
-            <div class="stat-label">Jobs Done</div>
-            <div class="stat-val" id="t-done">0</div>
-            <div class="stat-sub">completed</div>
-          </div>
-        </div>
-        <div class="gp-bar-wrap">
-          <div class="gp-bar-fill" id="t-bar" style="width:0%"></div>
-        </div>
-        <div class="gp-bar-labels"><span>$0</span><span>Overhead</span><span>Target</span></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Monthly Pace</div>
-        <div class="breakdown-row"><span class="br-label">Days elapsed</span><span class="br-val" id="p-elapsed">—</span></div>
-        <div class="breakdown-row"><span class="br-label">Days remaining</span><span class="br-val" id="p-remaining">—</span></div>
-        <div class="breakdown-row"><span class="br-label">GP per day (actual)</span><span class="br-val" id="p-actual">$0/day</span></div>
-        <div class="breakdown-row"><span class="br-label">GP per day needed</span><span class="br-val" id="p-needed">—</span></div>
-        <div class="breakdown-row"><span class="br-label">Projected month-end GP</span><span class="br-val" id="p-projected">—</span></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Monthly Targets</div>
-        <div class="settings-row">
-          <div><div class="sr-label">GP Target</div><div class="sr-sub">Monthly gross profit goal</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><span style="color:var(--text-muted)">$</span><input type="number" id="s-gp-target" value="50000" oninput="saveS()" style="width:90px"></div>
-        </div>
-        <div class="settings-row">
-          <div><div class="sr-label">Monthly Overhead</div><div class="sr-sub">Fixed costs first</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><span style="color:var(--text-muted)">$</span><input type="number" id="s-overhead" value="30000" oninput="saveS()" style="width:90px"></div>
-        </div>
-        <div class="settings-row">
-          <div><div class="sr-label">Working Days / Month</div></div>
-          <input type="number" id="s-workdays" value="22" oninput="saveS()" style="width:55px">
-        </div>
-      </div>
-    </div>
-
-
-    <!-- SERVICE CALL TAB -->
-    <div id="tab-servicecall" class="scroll-content" style="display:none">
-      <div class="card-title">Phone Service Call Builder</div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Build a complete service call: diagnostic + parts + labor.</p>
-      
-      <div class="card">
-        <div class="field-label">Diagnostic Fee</div>
-        <div class="price-input-wrap">
-          <span class="currency">$</span>
-          <input type="number" id="sc-diag" placeholder="99.00" value="99" inputmode="decimal" oninput="calcSC()">
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">Parts and Labor Items</div>
-        <div id="sc-items-list" style="margin-bottom:12px"></div>
-        <button class="btn btn-secondary btn-sm" onclick="addSCItem()" style="margin-bottom:12px">Add Part or Labor</button>
-      </div>
-      
-      <div class="card">
-        <div class="field-label">Hourly Labor Rate</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="sc-labor-rate" value="150" oninput="calcSC()" style="width:90px">
-          <span style="color:var(--text-muted)">per hour</span>
-        </div>
-      </div>
-      
-      <div class="result-box" id="sc-result" style="display:none">
-        <div class="result-label">Total Charge</div>
-        <div class="result-price" id="sc-sell">$0</div>
-        <div class="result-tags">
-          <div class="result-tag" id="sc-gp-tag">✓ $0 GP</div>
-          <div class="result-tag" id="sc-gp-pct">% GP</div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
-          <button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 18px" onclick="copySC()">Copy</button>
-          <button class="btn btn-secondary btn-sm" style="width:auto;padding:8px 18px" onclick="showSCBreakdown()">Breakdown</button>
-        </div>
-      </div>
-      
-      <div class="card" id="sc-breakdown" style="display:none">
-        <div class="card-title">Breakdown</div>
-        <div class="breakdown-row">
-          <span class="br-label">Diagnostic</span>
-          <span><span class="br-val" id="sc-bd-diag">—</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Parts</span>
-          <span><span class="br-val" id="sc-bd-parts">—</span></span>
-        </div>
-        <div class="breakdown-row">
-          <span class="br-label">Labor</span>
-          <span><span class="br-val" id="sc-bd-labor">—</span></span>
-        </div>
-        <div class="divider"></div>
-        <div class="breakdown-row" style="font-size:15px">
-          <span class="br-label" style="font-weight:700;color:var(--gold)">Total Cost</span>
-          <span><span class="br-val" id="sc-bd-total" style="color:var(--gold)">—</span></span>
-        </div>
-        <div class="breakdown-row" style="font-size:15px">
-          <span class="br-label" style="font-weight:700;color:var(--green-light)">Gross Profit</span>
-          <span><span class="br-val" id="sc-bd-gp" style="color:var(--green-light)">—</span><span class="br-pct" id="sc-bd-gp-pct" style="color:var(--green-light)"></span></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- QUOTE BUILDER TAB (Good/Better/Best) -->
-    <div id="tab-quoter" class="scroll-content" style="display:none">
-      <div class="card-title">Quote Builder — Good / Better / Best</div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Use this when replacing equipment. Enter 3 system options to generate professional 3-tier quotes.</p>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">Equipment or System</div>
-        <input type="text" id="qb-title" placeholder="e.g., '2-Ton A/C System', 'Furnace Upgrade'" value="Equipment Replacement">
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">GOOD Option</div>
-        <div class="field-label" style="font-size:10px;margin-bottom:6px">Equipment/Labor Cost</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="qb-good-cost" placeholder="0" value="3500" style="flex:1">
-        </div>
-        <input type="text" id="qb-good-desc" placeholder="Description (e.g., 'Standard 80% furnace')" value="Standard Equipment + Labor" style="width:100%;margin-bottom:8px;padding:9px 12px;font-size:13px">
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">BETTER Option</div>
-        <div class="field-label" style="font-size:10px;margin-bottom:6px">Equipment/Labor Cost</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="qb-better-cost" placeholder="0" value="5200" style="flex:1">
-        </div>
-        <input type="text" id="qb-better-desc" placeholder="Description (e.g., '95% furnace + extras')" value="Mid-Grade Equipment + Labor" style="width:100%;margin-bottom:8px;padding:9px 12px;font-size:13px">
-      </div>
-      
-      <div class="card">
-        <div class="field-label" style="margin-bottom:10px">BEST Option</div>
-        <div class="field-label" style="font-size:10px;margin-bottom:6px">Equipment/Labor Cost</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="color:var(--text-muted)">$</span>
-          <input type="number" id="qb-best-cost" placeholder="0" value="7200" style="flex:1">
-        </div>
-        <input type="text" id="qb-best-desc" placeholder="Description (e.g., 'Premium high-efficiency')" value="Premium Equipment + Labor" style="width:100%;margin-bottom:8px;padding:9px 12px;font-size:13px">
-      </div>
-      
-      <div class="card">
-        <button class="btn btn-primary" onclick="generateQuote3Tier()">📊 Generate 3-Tier Quote</button>
-      </div>
-      
-      <div id="qb-results" style="display:none">
-        <div class="card-title" style="margin-top:12px">Quote Summary</div>
-        <div id="qb-result-cards"></div>
-        <div style="display:flex;gap:10px;margin-top:12px">
-          <button class="btn btn-secondary btn-sm" onclick="saveQuote3Tier()">💾 Save All 3 to Tracker</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearQuote3Tier()">Clear</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETTINGS TAB -->
-    <div id="tab-settings" class="scroll-content" style="display:none">
-      <div class="card-title">Settings</div>
-      <div class="card">
-        <div class="card-title">Company</div>
-        <div class="settings-row">
-          <div class="sr-label">Company Name</div>
-          <input type="text" id="s-company" value="T. Byrd's Heating and Air" oninput="saveS()" style="width:160px;font-size:13px">
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Cost Allocation Model</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">These percentages drive the Build-Up pricing engine. They should total less than 100% — the remainder is your GP.</div>
-        <div class="settings-row">
-          <div><div class="sr-label">Tech Wages</div><div class="sr-sub">Incl. burden & payroll taxes</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><input type="number" id="s-wages" value="35" oninput="saveS()" style="width:55px"><span style="color:var(--text-muted)">%</span></div>
-        </div>
-        <div class="settings-row">
-          <div><div class="sr-label">Overhead</div><div class="sr-sub">Fixed costs, insurance, trucks</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><input type="number" id="s-oh-pct" value="20" oninput="saveS()" style="width:55px"><span style="color:var(--text-muted)">%</span></div>
-        </div>
-        <div class="settings-row">
-          <div><div class="sr-label">Warranty Reserve</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><input type="number" id="s-warranty" value="7" oninput="saveS()" style="width:55px"><span style="color:var(--text-muted)">%</span></div>
-        </div>
-        <div class="settings-row">
-          <div><div class="sr-label">Financing (always on)</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><input type="number" id="s-financing" value="5" oninput="saveS()" style="width:55px"><span style="color:var(--text-muted)">%</span></div>
-        </div>
-        <div class="settings-row">
-          <div><div class="sr-label">Part Multiplier (Mode 3)</div><div class="sr-sub">For high-cost, low-labor parts</div></div>
-          <div style="display:flex;align-items:center;gap:4px"><input type="number" id="s-multiplier" value="2.5" step="0.1" oninput="saveS()" style="width:65px"><span style="color:var(--text-muted)">×</span></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Security</div>
-        <div class="settings-row">
-          <div><div class="sr-label">Admin PIN</div><div class="sr-sub">4-digit lock code</div></div>
-          <input type="number" id="s-pin" placeholder="••••" inputmode="numeric" oninput="saveS()" style="width:80px">
-        </div>
-      </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Pricebook Editor</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">Customize your 191-item pricebook to match your actual HCP prices.</div>
-        <button class="btn btn-secondary" onclick="goEditPricebook()" style="margin-bottom:8px">📝 Edit 191 Items</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetPricebook()" style="font-size:13px;padding:8px">↻ Reset to Defaults</button>
-      <div style="text-align:center;padding:20px 0 8px;color:var(--text-dim);font-size:12px">
-        Cardinal Pricer v2.6 · T. Byrd's Heating and Air<br>Charlotte, NC · Built with ❤️ by Jarvis 🐦‍🔴
-      </div>
-    </div>
-
-    <!-- EDIT PRICEBOOK SCREEN -->
-    <div id="screen-edit-pb" class="screen" style="display:none;flex-direction:column">
-      <div class="app-header" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px">
-        <div>
-          <div class="company-name">Edit Pricebook</div>
-          <div class="header-sub">Customize your 191 prices</div>
-        </div>
-        <button class="back-btn" onclick="backFromEditPB()">← Back</button>
-      </div>
-      <div class="scroll-content">
-        <input type="text" id="epb-search" placeholder="Search items..." oninput="renderEditPricebook()" style="margin-bottom:12px;width:100%">
-        <div id="epb-list"></div>
-      </div>
-    </div>
-
-    <div class="bottom-nav">
-      <button class="nav-item active" onclick="goTab('home')" id="nav-home">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
-      </button>
-      <button class="nav-item" onclick="goTab('pricer')" id="nav-pricer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Pricer
-      </button>
-      <button class="nav-item" onclick="goTab('pricebook')" id="nav-pricebook">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Pricebook
-      </button>
-      <button class="nav-item" onclick="goTab('tracker')" id="nav-tracker">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Tracker
-      </button>
-      <button class="nav-item" onclick="goTab('servicecall')" id="nav-servicecall">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Service
-      </button>
-      
-      <button class="nav-item" onclick="goTab('settings')" id="nav-settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ═══════════════════════════════════════════════════════════
-// CARDINAL PRICER v2.6 — T. Byrd's Heating and Air
-// Smart Multipliers | Floor Prices | Enhanced Pricebook
-// ═══════════════════════════════════════════════════════════
-
-// T. BYRD'S PRICEBOOK (from HCP export)
-const PRICEBOOK = [
-  // Services
-  {cat:'Services',name:'A/C Service Call',price:77},
-  {cat:'Services',name:'A/C Tune-Up',price:129},
-  {cat:'Services',name:'A/C Filter Replacement',price:77},
-  {cat:'Services',name:'Heating Service Call',price:77},
-  {cat:'Services',name:'Furnace Tune-Up',price:129},
-  {cat:'Services',name:'Furnace Filter Replacement',price:77},
-  // Restorative Cleanings
-  {cat:'Cleanings',name:'Indoor Air Wheel Cleaning L1',price:429},
-  {cat:'Cleanings',name:'Indoor Air Wheel Cleaning L2',price:549},
-  {cat:'Cleanings',name:'A/C Drain Cleaning',price:289},
-  {cat:'Cleanings',name:'Indoor Air Coil Cleaning & Sanitization',price:389},
-  {cat:'Cleanings',name:'Heat Rejection Coil Cleaning L1',price:289},
-  {cat:'Cleanings',name:'Heat Rejection Coil Cleaning L2',price:397},
-  // Refrigerant
-  {cat:'Refrigerant',name:'R-22 Recharge (up to 2 lbs)',price:657},
-  {cat:'Refrigerant',name:'R-22 Recharge (up to 4 lbs)',price:1127},
-  {cat:'Refrigerant',name:'R-410A Recharge (up to 3 lbs)',price:475},
-  {cat:'Refrigerant',name:'R-410A Recharge (up to 6 lbs)',price:857},
-  {cat:'Refrigerant',name:'R-454B Refrigerant (per lb)',price:110},
-  {cat:'Refrigerant',name:'A/C Renew Oil Treatment',price:559},
-  {cat:'Refrigerant',name:'Sealant / Dye-Pack',price:371},
-  {cat:'Refrigerant',name:'TXV / EEV Replacement',price:595},
-  {cat:'Refrigerant',name:'Refrigerant Line Set Install',price:1284},
-  // High Voltage
-  {cat:'High Voltage',name:'Main Motor Starter (Dual Run Capacitor)',price:468},
-  {cat:'High Voltage',name:'Single Torque Booster',price:374},
-  {cat:'High Voltage',name:'Dual Torque Booster',price:457},
-  {cat:'High Voltage',name:'HVAC Surge Protection Device',price:598},
-  {cat:'High Voltage',name:'Compressor Terminal Rebuild Kit',price:549},
-  {cat:'High Voltage',name:'Easy Start Assist',price:388},
-  // Low Voltage
-  {cat:'Low Voltage',name:'Voltage Short Repair L1',price:297},
-  {cat:'Low Voltage',name:'Voltage Short Repair L2',price:497},
-  {cat:'Low Voltage',name:'Secondary Pan Flood Safety Switch',price:449},
-  {cat:'Low Voltage',name:'Primary Flood Safety Switch',price:479},
-  {cat:'Low Voltage',name:'Voltage Transformer',price:449},
-  // Controls / Thermostats
-  {cat:'Thermostats',name:'Honeywell T4 Pro Thermostat',price:397},
-  {cat:'Thermostats',name:'Honeywell T6 Pro Thermostat',price:697},
-  {cat:'Thermostats',name:'Honeywell T4 Programmable',price:199},
-  {cat:'Thermostats',name:'Zone Control System',price:1100},
-  {cat:'Controls',name:'Control Board (Universal)',price:750},
-  // Air Movement
-  {cat:'Air Movement',name:'Blower Motor (PSC, 0.5-0.75 HP)',price:595},
-  {cat:'Air Movement',name:'Universal Outdoor Fan Motor',price:1144},
-  // Plumbing / Drainage
-  {cat:'Drainage',name:'Water Removal Pump (Condensate)',price:460},
-  // Memberships
-  {cat:'Memberships',name:'T. Byrd\'s Maintenance Club (Monthly)',price:14.99},
-  // Furnace
-  {cat:'Furnace',name:'Inbound Gas Pressure Regulator',price:585},
-  {cat:'Furnace',name:'Bronze Furnace 80% Single Stage / Goodman',price:5778},
-  {cat:'Furnace',name:'Bronze Furnace 80% Single Stage / Daikin',price:7223},
-  {cat:'Furnace',name:'Silver Furnace 80% Two-Stage / Goodman',price:6120},
-  {cat:'Furnace',name:'Silver Furnace 80% Two-Stage / Daikin',price:7286},
-  {cat:'Furnace',name:'Bronze Furnace 96% Single Stage / Goodman',price:7408},
-  {cat:'Furnace',name:'Bronze Furnace 96% Single Stage / Daikin',price:9034},
-  {cat:'Furnace',name:'Silver Furnace 96% Two-Stage / Goodman',price:7908},
-  {cat:'Furnace',name:'Silver Furnace 96% Two-Stage / Daikin',price:9528},
-  {cat:'Furnace',name:'Gold Furnace 96% Two-Stage Comm. / Goodman',price:8411},
-  {cat:'Furnace',name:'Gold Furnace 97% Two-Stage Comm. / Daikin',price:11788},
-  {cat:'Furnace',name:'Gold Furnace 80% Two-Stage Comm. / Goodman',price:6940},
-  {cat:'Furnace',name:'Gold Furnace 80% Two-Stage Comm. / Daikin',price:8463},
-  {cat:'Furnace',name:'Platinum Furnace 97% Modulating VS / Goodman',price:10777},
-  {cat:'Furnace',name:'Platinum Furnace 98% Modulating VS / Daikin',price:12984},
-  // Air Handlers
-  {cat:'Air Handlers',name:'Bronze Air Handler Single Stage / Goodman',price:7472},
-  {cat:'Air Handlers',name:'Bronze Air Handler Single Stage / Daikin',price:9002},
-  {cat:'Air Handlers',name:'Bronze Air Handler Single Stage / Day & Night',price:7204},
-  {cat:'Air Handlers',name:'Silver Air Handler Single Stage / Goodman',price:7472},
-  {cat:'Air Handlers',name:'Silver Air Handler Single Stage / Daikin',price:9002},
-  {cat:'Air Handlers',name:'Silver Air Handler Two-Stage / Day & Night',price:9389},
-  {cat:'Air Handlers',name:'Gold Air Handler Variable Speed / Goodman',price:8534},
-  {cat:'Air Handlers',name:'Gold Air Handler Single Stage / Daikin',price:10282},
-  // IAQ
-  {cat:'Indoor Air Quality',name:'UV Light System',price:895},
-  {cat:'Indoor Air Quality',name:'Media Air Cleaner',price:695},
-  {cat:'Indoor Air Quality',name:'Whole Home Dehumidifier',price:1895},
-  {cat:'Indoor Air Quality',name:'Whole Home Humidifier',price:895},
-  // Ductwork
-  {cat:'Ductwork',name:'4" Flex Duct Run',price:199},
-  {cat:'Ductwork',name:'6" Flex Duct Run',price:250},
-  {cat:'Ductwork',name:'8" Flex Duct Run',price:300},
-  {cat:'Ductwork',name:'Hard Pipe Supply Air Run',price:400},
-  // Commercial
-  {cat:'Commercial',name:'Labor Hourly Rate (Commercial)',price:275},
-  // Add-ons
-  {cat:'Add-Ons',name:'Crane Service',price:500},
-];
-
-const PRICEBOOK_CATS = [...new Set(PRICEBOOK.map(i=>i.cat))];
-
-let S = {
-  pin:'4695', company:"T. Byrd's Heating and Air",
-  gpTarget:50000, overhead:30000, workDays:22,
-  wages:35, ohPct:20, warranty:7, financing:5, multiplier:2.5,
-  jobs:[],
-};
-
-let pMode = 'buildup', matPct = 15;
-let pinBuf = '';
-let lastCalc = null;
-let pbCatFilter = 'All';
-
-function load() { try { const d=JSON.parse(localStorage.getItem('cp_v2')||'{}'); Object.assign(S,d); } catch(e){} }
-function persist() { localStorage.setItem('cp_v2', JSON.stringify(S)); }
-
-
-// ─── PRICEBOOK EDITOR ───
-let customPrices = {};
-
-function loadCustomPrices() {
-  try {
-    customPrices = JSON.parse(localStorage.getItem('cp_custom_prices')||'{}');
-  } catch(e) {}
-}
-
-function saveCustomPrices() {
-  localStorage.setItem('cp_custom_prices', JSON.stringify(customPrices));
-}
-
-function getPrice(idx) {
-  if (customPrices[idx] !== undefined) return customPrices[idx];
-  return PRICEBOOK[idx].price;
-}
-
-function goEditPricebook() {
-  show('screen-edit-pb');
-  renderEditPricebook();
-}
-
-function renderEditPricebook() {
-  const searchQ = document.getElementById('epb-search')?.value.toLowerCase() || '';
-  let items = PRICEBOOK.map((item, idx) => ({...item, idx}));
-  
-  if (searchQ) {
-    items = items.filter(i => 
-      i.name.toLowerCase().includes(searchQ) || i.cat.toLowerCase().includes(searchQ)
-    );
-  }
-  
-  const grouped = {};
-  items.forEach(i => {
-    if (!grouped[i.cat]) grouped[i.cat] = [];
-    grouped[i.cat].push(i);
-  });
-  
-  const listEl = document.getElementById('epb-list');
-  listEl.innerHTML = Object.entries(grouped).map(([cat, itms]) => `
-    <div class="section-hdr" style="margin-top:12px">${cat}</div>
-    ${itms.map(i => {
-      const currentPrice = getPrice(i.idx);
-      const isCustom = customPrices[i.idx] !== undefined;
-      return `
-        <div class="pricebook-item" style="padding:10px 0">
-          <div style="flex:1">
-            <div class="pricebook-name">${i.name}</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Original: ${fmt(PRICEBOOK[i.idx].price)}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input type="number" value="${currentPrice}" onchange="setPBPrice(${i.idx}, this.value)" style="width:80px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--navy-mid);color:var(--text);font-size:13px" />
-            ${isCustom ? '<span style="font-size:10px;color:var(--orange)">✎ edited</span>' : ''}
-          </div>
-        </div>
-      `;
-    }).join('')}
-  `).join('');
-}
-
-function setPBPrice(idx, value) {
-  const price = parseFloat(value);
-  if (price > 0) {
-    customPrices[idx] = price;
-    saveCustomPrices();
-    renderEditPricebook();
-    toast('Price updated');
-  }
-}
-
-function resetPricebook() {
-  if (confirm('Reset all pricebook prices to defaults? This cannot be undone.')) {
-    customPrices = {};
-    saveCustomPrices();
-    renderEditPricebook();
-    toast('Pricebook reset to defaults');
-  }
-}
-
-function backFromEditPB() {
-  show('screen-app');
-  goTab('settings');
-}
-
-
-$1
-  load();
-  const now = new Date();
-  const mn = ['January','February','March','April','May','June','July','August','September','October','November','December'][now.getMonth()];
-  document.getElementById('h-month').textContent = mn+' '+now.getFullYear();
-  document.getElementById('t-month').textContent = mn+' '+now.getFullYear();
-  const firstRun = !localStorage.getItem('cp_setup');
-  if (firstRun) { show('screen-onboard'); return; }
-  document.getElementById('pin-co-name').textContent = S.company;
-  show('screen-pin');
-}
-
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function obNext(step) {
-  if (step===1) {
-    const c=document.getElementById('ob-company').value.trim();
-    if(!c){toast('Enter your company name');return;}
-    S.company=c; document.getElementById('ob-step-1').style.display='none';
-    document.getElementById('ob-step-2').style.display='';
-  } else {
-    const p=document.getElementById('ob-pin').value, p2=document.getElementById('ob-pin2').value;
-    if(p.length!==4){toast('PIN must be 4 digits');return;}
-    if(p!==p2){toast("PINs don't match");return;}
-    S.pin=p; persist(); localStorage.setItem('cp_setup','1');
-    document.getElementById('pin-co-name').textContent=S.company;
-    show('screen-pin');
-  }
-}
-
-function pk(d) {
-  if(d==='skip'){enterApp();return;}
-  if(pinBuf.length>=4) return;
-  pinBuf+=d; updDots();
-  if(pinBuf.length===4) {
-    setTimeout(()=>{
-      if(pinBuf===S.pin){enterApp();}
-      else{document.getElementById('pin-err').textContent='Incorrect PIN — try again';pinBuf='';updDots();}
-    },140);
-  }
-}
-function pdel(){pinBuf=pinBuf.slice(0,-1);document.getElementById('pin-err').textContent='';updDots();}
-function updDots(){for(let i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinBuf.length);}
-
-function enterApp() {
-  pinBuf='';updDots();
-  document.getElementById('h-company').textContent=S.company;
-  loadSettings(); updateHome(); updateTracker();
-  show('screen-app'); goTab('home');
-}
-
-function goTab(tab) {
-  ['home','pricer','quoter','pricebook','servicecall','tracker','settings'].forEach(t=>{
-    const tabEl = document.getElementById('tab-'+t);
-    const navEl = document.getElementById('nav-'+t);
-    if(tabEl) tabEl.style.display=t===tab?'':'none';
-    if(navEl) navEl.classList.toggle('active',t===tab);
-  });
-  if(tab==='tracker') updateTracker();
-  if(tab==='pricebook') renderFullPB();
-}
-
-// ─── MODE ───
-const MODE_DESC = {
-  buildup: '🧮 <strong style="color:var(--text)">Build-Up:</strong> Calculates sell price by covering all costs — overhead (20%), wages (35%), warranty (7%), financing (5%), materials (15–20%). Best for most repair calls.',
-  flatrate: '📋 <strong style="color:var(--text)">Flat Rate:</strong> Search T. Byrd\'s actual pricebook. Use when the job matches an existing line item — tap any item to populate the price.',
-  multiplier: '✖️ <strong style="color:var(--text)">2.5× Part Cost:</strong> For expensive parts with quick installs (ECM motors, control boards, coils). Avoids over-allocating labor time to the price.'
-};
-
-function setMode(m) {
-  pMode=m;
-  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('mode-btn-'+m).classList.add('active');
-  document.getElementById('mode-desc').innerHTML=MODE_DESC[m];
-  document.getElementById('cost-input-card').style.display=m==='flatrate'?'none':'';
-  document.getElementById('flatrate-card').style.display=m==='flatrate'?'':'none';
-  document.getElementById('materials-pct-row').style.display=m==='buildup'?'':'none';
-  document.getElementById('p-result').style.display='none';
-  document.getElementById('p-breakdown').style.display='none';
-  if(m==='flatrate') searchPB();
-  else calcP();
-}
-
-function setMatPct(el,pct) {
-  matPct=pct;
-  document.querySelectorAll('#materials-pct-row .cat-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active'); calcP();
-}
-
-// ─── CORE PRICING ENGINE ───
-function calcBuildUp(cost, matPctV) {
-  // cost = materials (matPctV% of sell price)
-  // fixed variable costs: wages + overhead + warranty + financing
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  const matP = matPctV / 100;
-  // sell = cost / matP, BUT we also need to back out the variable %
-  // sell * matP = cost, sell * varPct = variable costs
-  // sell * (matP + varPct) must be <= sell (otherwise no GP)
-  // Actually: sell = cost / matP, then GP = sell - cost - sell*varPct
-  const sell = cost / matP;
-  const gp = sell - cost - sell * varPct;
-  const gpPct = gp / sell * 100;
-  return { sell, gp, gpPct,
-    wages: sell * S.wages/100,
-    ohAmt: sell * S.ohPct/100,
-    warrantyAmt: sell * S.warranty/100,
-    financingAmt: sell * S.financing/100,
-    matAmt: cost,
-    matPctActual: matPctV,
-    mode: 'buildup' };
-}
-
-function calcMultiplier(cost) {
-  const sell = cost * S.multiplier;
-  const gp = sell - cost - sell * (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  const gpPct = gp / sell * 100;
-  return { sell, gp, gpPct,
-    wages: sell * S.wages/100,
-    ohAmt: sell * S.ohPct/100,
-    warrantyAmt: sell * S.warranty/100,
-    financingAmt: sell * S.financing/100,
-    matAmt: cost,
-    matPctActual: cost/sell*100,
-    mode: 'multiplier' };
-}
-
-function calcP() {
-  if (pMode==='flatrate') return;
-  const cost = parseFloat(document.getElementById('p-cost').value)||0;
-  if (cost<=0) { document.getElementById('p-result').style.display='none'; document.getElementById('p-breakdown').style.display='none'; return; }
-  let r;
-  if (pMode==='buildup') r = calcBuildUp(cost, matPct);
-  else r = calcMultiplier(cost);
-  lastCalc = r;
-  
-  // Show tiered multiplier suggestion only in multiplier mode
-  if (pMode === 'multiplier') {
-    const suggestion = getSuggestedMultiplier(cost);
-    showMultiplierSuggestion(cost, suggestion);
-  } else {
-    const suggBox = document.getElementById('multiplier-suggestion');
-    if (suggBox) suggBox.style.display = 'none';
-  }
-  
-  showResult(r);
-}
-
-function showResult(r) {
-  document.getElementById('p-sell').textContent = fmt(r.sell);
-  document.getElementById('p-gp-tag').textContent = '✓ ' + fmt(r.gp) + ' GP';
-  document.getElementById('p-gp-pct').textContent = '◎ ' + Math.round(r.gpPct) + '% GP';
-  const modeLabels = { buildup: '🧮 Build-Up pricing', flatrate: '📋 T. Byrd\'s flat rate', multiplier: '✖️ ' + S.multiplier + '× part cost' };
-  document.getElementById('p-mode-label').textContent = modeLabels[r.mode] || '';
-  
-  // Add floor price warning for multiplier mode
-  const resultBox = document.getElementById('p-result');
-  let floorHTML = '';
-  if (r.mode === 'multiplier') {
-    const cost = parseFloat(document.getElementById('p-cost').value) || 0;
-    const floor = calcFloorPrice(cost);
-    floorHTML = `<div style="font-size:11px;color:var(--orange);margin-top:8px">⚠️ Never go below: ${fmt(floor)}</div>`;
-    // Highlight if price is below floor
-    if (r.sell < floor) {
-      resultBox.style.borderColor = 'var(--orange)';
-    } else {
-      resultBox.style.borderColor = 'var(--red)';
-    }
-  } else {
-    resultBox.style.borderColor = 'var(--red)';
-  }
-  
-  document.getElementById('p-result').style.display = '';
-  
-  // Insert floor price after GP tags if in multiplier mode
-  if (floorHTML) {
-    const tagsContainer = document.querySelector('.result-tags');
-    let floorContainer = document.getElementById('floor-price-display');
-    if (!floorContainer) {
-      floorContainer = document.createElement('div');
-      floorContainer.id = 'floor-price-display';
-      tagsContainer.parentNode.insertBefore(floorContainer, tagsContainer.nextSibling);
-    }
-    floorContainer.innerHTML = floorHTML;
-  } else {
-    const floorContainer = document.getElementById('floor-price-display');
-    if (floorContainer) floorContainer.innerHTML = '';
-  }
-  
-  updateBreakdown(r);
-}
-
-function showBreakdown() {
-  const bd = document.getElementById('p-breakdown');
-  bd.style.display = bd.style.display==='none' ? '' : 'none';
-}
-
-function updateBreakdown(r) {
-  document.getElementById('bd-materials').textContent = fmt(r.matAmt);
-  document.getElementById('bd-materials-pct').textContent = Math.round(r.matPctActual) + '%';
-  document.getElementById('bd-wages').textContent = fmt(r.wages);
-  document.getElementById('bd-overhead').textContent = fmt(r.ohAmt);
-  document.getElementById('bd-warranty').textContent = fmt(r.warrantyAmt);
-  document.getElementById('bd-financing').textContent = fmt(r.financingAmt);
-  document.getElementById('bd-gp').textContent = fmt(r.gp);
-  document.getElementById('bd-gp-pct').textContent = Math.round(r.gpPct) + '%';
-  document.getElementById('bd-bar').style.width = Math.min(Math.max(r.gpPct,0),40)/40*100 + '%';
-}
-
-function copyP() {
-  const v = document.getElementById('p-sell').textContent;
-  navigator.clipboard.writeText(v.replace(/[$,]/g,'')).then(()=>toast('Price copied! '+v)).catch(()=>toast(v));
-}
-
-// ─── TIERED MULTIPLIER SUGGESTIONS ───
-function getSuggestedMultiplier(cost) {
-  if (cost <= 20) return { multi: 3.5, range: [3.0, 4.0], reason: 'Small part — high labor ratio' };
-  if (cost <= 75) return { multi: 3.0, range: [2.8, 3.2], reason: 'Mid-small part' };
-  if (cost <= 200) return { multi: 2.5, range: [2.2, 2.8], reason: 'Mid-range part' };
-  if (cost <= 500) return { multi: 1.9, range: [1.8, 2.2], reason: 'Larger part' };
-  return { multi: 1.5, range: [1.4, 1.8], reason: 'Equipment — margin over labor' };
-}
-
-function calcFloorPrice(cost) {
-  const varPct = (S.wages + S.ohPct) / 100;
-  const floor = cost * (1 + varPct);
-  return Math.ceil(floor / 5) * 5;
-}
-
-function showMultiplierSuggestion(cost, suggestion) {
-  const suggBox = document.getElementById('multiplier-suggestion');
-  if (!suggBox) return;
-  
-  const margin = Math.round((suggestion.multi - 1) / suggestion.multi * 100);
-  suggBox.querySelector('#multiplier-text').textContent = `For $${Math.round(cost)} part: Try ${suggestion.multi}x (${margin}% margin)`;
-  suggBox.querySelector('#multiplier-reason').textContent = suggestion.reason;
-  
-  const buttonContainer = suggBox.querySelector('#multiplier-buttons');
-  buttonContainer.innerHTML = suggestion.range.map(m => {
-    const sell = Math.round(cost * m);
-    return `<button class="btn btn-secondary btn-sm" style="font-size:12px;padding:7px 12px" onclick="applySuggestedMultiplier(${m})">${m}x → $${sell}</button>`;
-  }).join('');
-  
-  suggBox.style.display = '';
-}
-
-function applySuggestedMultiplier(newMulti) {
-  S.multiplier = newMulti;
-  saveS();
-  document.getElementById('s-multiplier').value = newMulti;
-  calcP();
-  toast('Multiplier set to ' + newMulti + 'x');
-}
-
-// ─── PRICEBOOK ───
-function searchPB() {
-  const q = (document.getElementById('pb-search')?.value||'').toLowerCase();
-  const results = q.length < 1 ? PRICEBOOK.slice(0,20) : PRICEBOOK.filter(i=>i.name.toLowerCase().includes(q)||i.cat.toLowerCase().includes(q));
-  const el = document.getElementById('pb-results');
-  if (!results.length) { el.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:12px 0">No results</div>'; return; }
-  el.innerHTML = results.slice(0,30).map(i=>`
-    <div class="pricebook-item" onclick="selectPBItem(${i.price},'${i.name.replace(/'/g,"\\'")}')">
-      <div><div class="pricebook-name">${i.name}</div><div style="font-size:11px;color:var(--text-muted)">${i.cat}</div></div>
-      <div class="pricebook-price">${fmt(getPrice(PRICEBOOK.indexOf(i)))}</div>
-      <div class="pricebook-arrow">→</div>
-    </div>
-  `).join('');
-}
-
-function selectPBItem(price, name) {
-  const r = { sell: price, gp: 0, gpPct: 0, wages:0, ohAmt:0, warrantyAmt:0, financingAmt:0, matAmt:0, matPctActual:0, mode:'flatrate' };
-  lastCalc = r;
-  document.getElementById('p-sell').textContent = fmt(price);
-  document.getElementById('p-gp-tag').textContent = '📋 T. Byrd\'s list price';
-  document.getElementById('p-gp-pct').textContent = name;
-  document.getElementById('p-mode-label').textContent = '📋 T. Byrd\'s flat rate pricebook';
-  document.getElementById('p-result').style.display = '';
-  document.getElementById('p-breakdown').style.display = 'none';
-  toast(name + ' — ' + fmt(price));
-}
-
-function renderFullPB() {
-  const q = (document.getElementById('full-pb-search')?.value||'').toLowerCase();
-  let items = PRICEBOOK;
-  if (pbCatFilter !== 'All') items = items.filter(i=>i.cat===pbCatFilter);
-  if (q) items = items.filter(i=>i.name.toLowerCase().includes(q)||i.cat.toLowerCase().includes(q));
-
-  // Category filter chips
-  const catEl = document.getElementById('pb-category-filter');
-  if (!catEl.innerHTML) {
-    catEl.innerHTML = ['All',...PRICEBOOK_CATS].map(c=>`
-      <div class="cat-chip ${c==='All'?'active':''}" onclick="setPBCat(this,'${c}')">${c}</div>
-    `).join('');
-  }
-
-  const listEl = document.getElementById('full-pb-list');
-  if (!items.length) { listEl.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">No items found</div>'; return; }
-
-  // Group by category
-  const grouped = {};
-  items.forEach(i=>{ grouped[i.cat]=grouped[i.cat]||[]; grouped[i.cat].push(i); });
-  listEl.innerHTML = Object.entries(grouped).map(([cat,itms])=>`
-    <div class="section-hdr" style="margin-top:12px">${cat}</div>
-    <div class="card" style="padding:8px 16px">
-      ${itms.map(i=>`
-        <div class="pricebook-item" onclick="selectPBItem(${i.price},'${i.name.replace(/'/g,"\\'")}');goTab('pricer');setMode('flatrate')">
-          <div class="pricebook-name">${i.name}</div>
-          <div class="pricebook-price">${fmt(getPrice(PRICEBOOK.indexOf(i)))}</div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
-
-function setPBCat(el, cat) {
-  pbCatFilter = cat;
-  document.querySelectorAll('#pb-category-filter .cat-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  renderFullPB();
-}
-
-// ─── HOME ───
-function updateHome() {
-  const now=new Date(),m=now.getMonth(),y=now.getFullYear();
-  const mt=S.jobs.filter(j=>{const d=new Date(j.date);return d.getMonth()===m&&d.getFullYear()===y;});
-  const gp=mt.filter(j=>j.status!=='Quoted').reduce((s,j)=>s+(j.gp||0),0);
-  document.getElementById('h-gp').textContent=fmtK(gp);
-  document.getElementById('h-target').textContent=fmtK(S.gpTarget);
-  document.getElementById('h-jobs').textContent=mt.length;
-  const card=document.getElementById('home-jobs-card');
-  if(!S.jobs.length){card.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h3>No jobs yet</h3><p>Tap ⚡ Price a Part or Job to get started.</p></div>';return;}
-  card.innerHTML=S.jobs.slice(0,6).map(j=>`
-    <div class="list-item">
-      <div><div class="li-main">${j.customer||'Unknown'}</div><div class="li-sub">${new Date(j.date).toLocaleDateString()}</div></div>
-      <div class="li-right"><div class="li-val">${fmt(j.sell)}</div><span class="li-badge ${(j.status||'quoted').toLowerCase()}">${j.status||'Quoted'}</span></div>
-    </div>
-  `).join('');
-}
-
-// ─── TRACKER ───
-function updateTracker() {
-  const now=new Date(),m=now.getMonth(),y=now.getFullYear();
-  const target=parseFloat(document.getElementById('s-gp-target')?.value)||S.gpTarget;
-  const overhead=parseFloat(document.getElementById('s-overhead')?.value)||S.overhead;
-  const workDays=parseFloat(document.getElementById('s-workdays')?.value)||S.workDays;
-  const mt=S.jobs.filter(j=>{const d=new Date(j.date);return d.getMonth()===m&&d.getFullYear()===y;});
-  const gp=mt.filter(j=>j.status!=='Quoted').reduce((s,j)=>s+(j.gp||0),0);
-  const done=mt.filter(j=>j.status==='Completed').length;
-  const pct=target>0?Math.round(gp/target*100):0;
-  document.getElementById('t-gp').textContent=fmt(gp);
-  document.getElementById('t-target').textContent=fmt(target);
-  document.getElementById('t-overhead').textContent=fmt(overhead);
-  document.getElementById('t-oh-status').textContent=gp>=overhead?'✓ covered':'not covered';
-  document.getElementById('t-done').textContent=done;
-  document.getElementById('t-pct').textContent=pct+'% of target';
-  document.getElementById('t-bar').style.width=Math.min(pct,100)+'%';
-  const dim=new Date(y,m+1,0).getDate(),elapsed=now.getDate(),remaining=dim-elapsed;
-  const gpDay=elapsed>0?gp/elapsed:0,gpNeeded=Math.max(0,target-gp);
-  const gpDayNeeded=remaining>0?gpNeeded/remaining:0;
-  document.getElementById('p-elapsed').textContent=elapsed+' of '+dim+' days';
-  document.getElementById('p-remaining').textContent=remaining+' days';
-  document.getElementById('p-actual').textContent=fmtK(gpDay)+'/day';
-  document.getElementById('p-needed').textContent=remaining>0?fmtK(gpDayNeeded)+'/day':'On target!';
-  document.getElementById('p-projected').textContent=fmtK(gpDay*dim);
-}
-
-// ─── SETTINGS ───
-function loadSettings() {
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
-  set('s-company',S.company); set('s-gp-target',S.gpTarget);
-  set('s-overhead',S.overhead); set('s-workdays',S.workDays);
-  set('s-wages',S.wages); set('s-oh-pct',S.ohPct);
-  set('s-warranty',S.warranty); set('s-financing',S.financing);
-  set('s-multiplier',S.multiplier);
-}
-function saveS() {
-  const g=id=>parseFloat(document.getElementById(id)?.value)||0;
-  const t=id=>document.getElementById(id)?.value||'';
-  S.company=t('s-company'); S.gpTarget=g('s-gp-target')||50000;
-  S.overhead=g('s-overhead')||30000; S.workDays=g('s-workdays')||22;
-  S.wages=g('s-wages')||35; S.ohPct=g('s-oh-pct')||20;
-  S.warranty=g('s-warranty')||7; S.financing=g('s-financing')||5;
-  S.multiplier=g('s-multiplier')||2.5;
-  const pin=document.getElementById('s-pin')?.value; if(pin&&pin.length===4) S.pin=pin;
-  document.getElementById('h-company').textContent=S.company;
-  persist(); calcP();
-}
-
-// ─── UTILS ───
-function fmt(n){if(!n&&n!==0)return'—';return'$'+Math.round(n).toLocaleString();}
-function fmtK(n){if(!n&&n!==0)return'$0';if(Math.abs(n)>=1000)return'$'+(n/1000).toFixed(1)+'k';return'$'+Math.round(n);}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
-
-
-// ─── SERVICE CALL ───
-let scItems = [];
-
-function addSCItem() {
-  scItems.push({id: Date.now(), desc: '', cost: 0, hours: 0});
-  renderSCItems();
-}
-
-function removeSCItem(id) {
-  scItems = scItems.filter(i => i.id !== id);
-  renderSCItems();
-  calcSC();
-}
-
-function renderSCItems() {
-  const list = document.getElementById('sc-items-list');
-  if (!scItems.length) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No items. Tap + to add.</div>';
-    return;
-  }
-  list.innerHTML = scItems.map(item => `
-    <div style="background:var(--navy-mid);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border)">
-      <input type="text" placeholder="Part or labor description" value="${item.desc}" onchange="updateSCItem(${item.id},'desc',this.value);calcSC()" style="width:100%;margin-bottom:8px;padding:8px;background:var(--navy);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">COST</div><div style="display:flex;align-items:center;gap:4px"><span style="color:var(--text-muted)">$</span><input type="number" value="${item.cost}" onchange="updateSCItem(${item.id},'cost',parseFloat(this.value));calcSC()" style="flex:1;padding:6px;background:var(--navy);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px"></div></div>
-        <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">HOURS</div><input type="number" step="0.5" value="${item.hours}" onchange="updateSCItem(${item.id},'hours',parseFloat(this.value));calcSC()" style="width:100%;padding:6px;background:var(--navy);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px"></div>
-      </div>
-      <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:6px 10px" onclick="removeSCItem(${item.id})">Remove</button>
-    </div>
-  `).join('');
-}
-
-function updateSCItem(id, field, value) {
-  const item = scItems.find(i => i.id === id);
-  if (item) item[field] = value;
-}
-
-function calcSC() {
-  const diag = parseFloat(document.getElementById('sc-diag')?.value) || 0;
-  const labRate = parseFloat(document.getElementById('sc-labor-rate')?.value) || 150;
-  let partsCost = 0, laborCost = 0;
-  scItems.forEach(item => {
-    partsCost += item.cost || 0;
-    laborCost += (item.hours || 0) * labRate;
-  });
-  const totalCost = diag + partsCost + laborCost;
-  if (totalCost <= 0) {
-    document.getElementById('sc-result').style.display = 'none';
-    return;
-  }
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  const sell = totalCost / (1 - 0.35 - varPct);
-  const gp = sell - totalCost;
-  const gpPct = gp / sell * 100;
-  document.getElementById('sc-sell').textContent = fmt(sell);
-  document.getElementById('sc-gp-tag').textContent = 'GP ' + fmt(gp);
-  document.getElementById('sc-gp-pct').textContent = Math.round(gpPct) + '%';
-  document.getElementById('sc-result').style.display = '';
-  document.getElementById('sc-bd-diag').textContent = fmt(diag);
-  document.getElementById('sc-bd-parts').textContent = fmt(partsCost);
-  document.getElementById('sc-bd-labor').textContent = fmt(laborCost);
-  document.getElementById('sc-bd-total').textContent = fmt(totalCost);
-  document.getElementById('sc-bd-gp').textContent = fmt(gp);
-  document.getElementById('sc-bd-gp-pct').textContent = Math.round(gpPct) + '%';
-}
-
-function showSCBreakdown() {
-  const bd = document.getElementById('sc-breakdown');
-  bd.style.display = bd.style.display === 'none' ? '' : 'none';
-}
-
-function copySC() {
-  const v = document.getElementById('sc-sell').textContent;
-  navigator.clipboard.writeText(v.replace(/[$,]/g,'')).then(()=>toast('Copied: '+v)).catch(()=>toast(v));
-}
-
-function saveSCJob() {
-  const diag = parseFloat(document.getElementById('sc-diag')?.value) || 0;
-  const labRate = parseFloat(document.getElementById('sc-labor-rate')?.value) || 150;
-  let partsCost = 0, laborCost = 0;
-  scItems.forEach(item => {partsCost += item.cost || 0;laborCost += (item.hours || 0) * labRate;});
-  const totalCost = diag + partsCost + laborCost;
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  const sell = totalCost / (1 - 0.35 - varPct);
-  const gp = sell - totalCost;
-  const desc = scItems.map(i => i.desc).filter(d => d).join(", ") || "Service Call";
-  S.jobs.push({date: new Date().toISOString(),customer: "Field Service",desc, sell, gp, cost: totalCost,status: "Completed"});
-  persist();
-  updateHome();
-  toast("Job saved!");
-}
-
-
-
-// ─── QUICK REPAIRS ───
-function loadQuickRepair(name, cost) {
-  document.getElementById('p-cost').value = cost;
-  document.getElementById('p-desc').value = name;
-  document.getElementById('mat-15').click();
-  calcP();
-  toast(name + ' loaded ($' + cost + ')');
-}
-
-// ─── QUOTE BUILDER (Good/Better/Best) ───
-let qb3Tier = null;
-
-function generateQuote3Tier() {
-  const title = document.getElementById('qb-title').value || 'Equipment Replacement';
-  const goodCost = parseFloat(document.getElementById('qb-good-cost').value) || 0;
-  const betterCost = parseFloat(document.getElementById('qb-better-cost').value) || 0;
-  const bestCost = parseFloat(document.getElementById('qb-best-cost').value) || 0;
-  
-  const goodDesc = document.getElementById('qb-good-desc').value || 'Good Option';
-  const betterDesc = document.getElementById('qb-better-desc').value || 'Better Option';
-  const bestDesc = document.getElementById('qb-best-desc').value || 'Best Option';
-  
-  if (goodCost <= 0 || betterCost <= 0 || bestCost <= 0) {
-    toast('All costs must be greater than 0');
-    return;
-  }
-  
-  const varPct = (S.wages + S.ohPct + S.warranty + S.financing) / 100;
-  
-  const calc3Tier = (cost) => {
-    const sell = cost / (1 - 0.35 - varPct);
-    const gp = sell - cost;
-    const gpPct = gp / sell * 100;
-    return { sell, gp, gpPct };
-  };
-  
-  const good = calc3Tier(goodCost);
-  const better = calc3Tier(betterCost);
-  const best = calc3Tier(bestCost);
-  
-  qb3Tier = { title, goodDesc, betterDesc, bestDesc, goodCost, betterCost, bestCost, good, better, best };
-  
-  const res = document.getElementById('qb-result-cards');
-  res.innerHTML = `
-    <div class="card" style="border-color: var(--text-muted)">
-      <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">${title}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div style="background:var(--navy-mid);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">GOOD</div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:2px">${fmt(good.sell)}</div>
-          <div style="font-size:10px;color:var(--green-light)">+${fmt(good.gp)}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${goodDesc}</div>
-        </div>
-        <div style="background:var(--navy-mid);border-radius:8px;padding:12px;text-align:center;border:1.5px solid var(--red)">
-          <div style="font-size:10px;color:var(--red);margin-bottom:4px;font-weight:700">BETTER ⭐</div>
-          <div style="font-size:22px;font-weight:700;margin-bottom:2px;color:var(--red)">${fmt(better.sell)}</div>
-          <div style="font-size:10px;color:var(--green-light)">+${fmt(better.gp)}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${betterDesc}</div>
-        </div>
-        <div style="background:var(--navy-mid);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">BEST</div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:2px">${fmt(best.sell)}</div>
-          <div style="font-size:10px;color:var(--green-light)">+${fmt(best.gp)}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${bestDesc}</div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('qb-results').style.display = '';
-  toast('3-tier quote generated');
-}
-
-function saveQuote3Tier() {
-  if (!qb3Tier) { toast('Generate a quote first'); return; }
-  
-  const { title, goodDesc, betterDesc, bestDesc, goodCost, betterCost, bestCost, good, better, best } = qb3Tier;
-  const now = new Date().toISOString();
-  
-  S.jobs.push({
-    date: now,
-    customer: title,
-    desc: 'GOOD: ' + goodDesc + ' | $' + Math.round(good.sell),
-    sell: good.sell,
-    gp: good.gp,
-    cost: goodCost,
-    status: 'Quoted'
-  });
-  
-  S.jobs.push({
-    date: now,
-    customer: title,
-    desc: 'BETTER: ' + betterDesc + ' | $' + Math.round(better.sell),
-    sell: better.sell,
-    gp: better.gp,
-    cost: betterCost,
-    status: 'Quoted'
-  });
-  
-  S.jobs.push({
-    date: now,
-    customer: title,
-    desc: 'BEST: ' + bestDesc + ' | $' + Math.round(best.sell),
-    sell: best.sell,
-    gp: best.gp,
-    cost: bestCost,
-    status: 'Quoted'
-  });
-  
-  persist();
-  updateHome();
-  toast('All 3 quotes saved to Tracker');
-}
-
-function clearQuote3Tier() {
-  qb3Tier = null;
-  document.getElementById('qb-results').style.display = 'none';
-  document.getElementById('qb-title').value = 'Equipment Replacement';
-  document.getElementById('qb-good-cost').value = '3500';
-  document.getElementById('qb-better-cost').value = '5200';
-  document.getElementById('qb-best-cost').value = '7200';
-  toast('Cleared');
-}
-
-init();
-</script>
+    
+    <script>
+        // Set today's date as default for "Date Sold"
+        document.getElementById('dateSold').valueAsDate = new Date();
+        
+        // Show/hide "Which Tech?" field based on Lead Source
+        document.getElementById('leadSource').addEventListener('change', function() {
+            const techField = document.getElementById('techField');
+            if (this.value === 'Tech Turnover (TTO)') {
+                techField.classList.add('show');
+                document.getElementById('techName').required = true;
+            } else {
+                techField.classList.remove('show');
+                document.getElementById('techName').required = false;
+                document.getElementById('techName').value = '';
+            }
+        });
+        
+        // Handle form submission
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = {
+                customerName: document.getElementById('customerName').value,
+                dateSold: document.getElementById('dateSold').value,
+                installDate: document.getElementById('installDate').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                jobNumber: document.getElementById('jobNumber').value,
+                equipment: document.getElementById('equipment').value,
+                leadSource: document.getElementById('leadSource').value,
+                techName: document.getElementById('techName').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                amount: document.getElementById('amount').value,
+                notes: document.getElementById('notes').value
+            };
+            
+            try {
+                // Submit to backend (works with CORS enabled)
+                // For local testing: http://localhost:8000/submit
+                // For production: will be set by environment
+                const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:8000/submit'
+                    : '/submit';  // Will use same domain in production
+                
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                    mode: 'cors'
+                });
+                
+                // Show success message (no-cors mode doesn't allow reading response)
+                const successMsg = document.getElementById('successMsg');
+                successMsg.classList.add('show');
+                
+                // Clear form
+                this.reset();
+                document.getElementById('dateSold').valueAsDate = new Date();
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    successMsg.classList.remove('show');
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMsg = document.getElementById('errorMsg');
+                errorMsg.classList.add('show');
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>
