@@ -152,9 +152,11 @@ def health():
 if __name__ == '__main__':
     print("🚀 HVAC Pipeline Server Starting...")
     print(f"📧 Sender: {SENDER_EMAIL}")
-    print(f"🌐 Serving on http://0.0.0.0:8000")
+    print(f"🌐 Serving on http://0.0.0.0:10000")
+    print("📋 Job Entry Form: /")
+    print("📐 Duct Calculator: /duct-calculator")
     
     if not SENDER_PASSWORD:
         print("⚠️  WARNING: GMAIL_APP_PASSWORD not set!")
     
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=False)
