@@ -13,7 +13,7 @@ from datetime import datetime
 import os
 import json
 
-app = Flask(__name__, static_folder='/tmp/hvac_deploy')
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Gmail configuration
@@ -59,12 +59,17 @@ def send_email(recipient, subject, body):
 @app.route('/')
 def serve_form():
     """Serve the HTML form"""
-    return send_from_directory('/tmp/hvac_deploy', 'index.html')
+    return send_from_directory('.', 'index.html')
 
-@app.route('/logo.jpg')
-def serve_logo():
-    """Serve the logo image"""
-    return send_from_directory('/tmp/hvac_deploy', 'logo.jpg')
+@app.route('/tbyrd-logo.jpg')
+def serve_tbyrd_logo():
+    """Serve the T. Byrd's cardinal logo"""
+    return send_from_directory('.', 'tbyrd-logo.jpg')
+
+@app.route('/duct-calculator')
+def serve_duct_calculator():
+    """Serve the HVAC duct calculator"""
+    return send_from_directory('.', 'duct-calculator.html')
 
 @app.route('/submit', methods=['POST', 'OPTIONS'])
 def submit_job():
