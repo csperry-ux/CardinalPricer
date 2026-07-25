@@ -36,15 +36,20 @@ EQUIPMENT_RECIPIENTS = [
 ]
 
 def send_email(recipient, subject, body):
-    """Send a single email"""
+    """Send email via Gmail SMTP"""
     try:
+        if not SENDER_PASSWORD:
+            print(f"⚠️ GMAIL_APP_PASSWORD not set - email not sent to {recipient}")
+            return False
+            
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
         msg['To'] = recipient
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
         
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        # Use Gmail SMTP with timeout
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.send_message(msg)
@@ -141,11 +146,16 @@ Please pull and prepare this equipment for the scheduled install date above.
         
         # Send full detail emails to you only for now
         for recipient in FULL_DETAIL_RECIPIENTS:
+            print(f"📧 Sending full details to {recipient}...")
             send_email(recipient, f"New HVAC Job Entry: {data['customerName']}", full_body)
         
         # Send equipment emails to suppliers
-        for recipient in EQUIPMENT_RECIPIENTS:
-            send_email(recipient, "NEW TBYRD HVAC Equipment Order", equipment_body)
+        if EQUIPMENT_RECIPIENTS:
+            for recipient in EQUIPMENT_RECIPIENTS:
+                print(f"📦 Sending equipment order to {recipient}...")
+                send_email(recipient, "NEW TBYRD HVAC Equipment Order", equipment_body)
+        else:
+            print(f"ℹ️  No equipment recipients configured (TEST MODE)")
         
         return jsonify({
             'success': True,
