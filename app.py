@@ -59,17 +59,29 @@ def send_email(recipient, subject, body):
 @app.route('/')
 def serve_form():
     """Serve the HTML form"""
-    return send_from_directory('.', 'index.html')
+    import os
+    form_path = os.path.join(os.path.dirname(__file__), 'index.html')
+    if os.path.exists(form_path):
+        return send_from_directory(os.path.dirname(__file__), 'index.html')
+    return "Form not found", 404
 
 @app.route('/tbyrd-logo.jpg')
 def serve_tbyrd_logo():
     """Serve the T. Byrd's cardinal logo"""
-    return send_from_directory('.', 'tbyrd-logo.jpg')
+    import os
+    logo_path = os.path.join(os.path.dirname(__file__), 'tbyrd-logo.jpg')
+    if os.path.exists(logo_path):
+        return send_from_directory(os.path.dirname(__file__), 'tbyrd-logo.jpg')
+    return "Logo not found", 404
 
 @app.route('/duct-calculator')
 def serve_duct_calculator():
-    """Serve the HVAC duct calculator"""
-    return send_from_directory('.', 'duct-calculator.html')
+    """Serve the duct calculator"""
+    import os
+    calc_path = os.path.join(os.path.dirname(__file__), 'duct-calculator.html')
+    if os.path.exists(calc_path):
+        return send_from_directory(os.path.dirname(__file__), 'duct-calculator.html')
+    return "Calculator not found", 404
 
 @app.route('/submit', methods=['POST', 'OPTIONS'])
 def submit_job():
