@@ -287,6 +287,13 @@
             
             <div class="form-row full">
                 <div class="form-group">
+                    <label for="equipmentDeliveryDate">Equipment Pickup/Delivery Date</label>
+                    <input type="date" id="equipmentDeliveryDate" name="equipmentDeliveryDate" placeholder="When equipment needs to arrive at shop">
+                </div>
+            </div>
+            
+            <div class="form-row full">
+                <div class="form-group">
                     <label for="address">Address</label>
                     <input type="text" id="address" name="address" placeholder="Customer address">
                 </div>
@@ -391,6 +398,7 @@
                 customerName: document.getElementById('customerName').value,
                 dateSold: document.getElementById('dateSold').value,
                 installDate: document.getElementById('installDate').value,
+                equipmentDeliveryDate: document.getElementById('equipmentDeliveryDate').value,
                 address: document.getElementById('address').value,
                 phone: document.getElementById('phone').value,
                 jobNumber: document.getElementById('jobNumber').value,

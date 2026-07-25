@@ -97,6 +97,7 @@ New Job Submitted - {timestamp}
 Customer: {data['customerName']}
 Date Sold: {data['dateSold']}
 Install Date: {data['installDate']}
+Equipment Pickup/Delivery Date: {data.get('equipmentDeliveryDate', 'Not specified')}
 Address: {data['address']}
 Phone: {data['phone']}
 Job #: {data['jobNumber']}
