@@ -511,9 +511,9 @@
     </div>
     
     <!-- Mode Toggle Button -->
-    <button class="mode-toggle test" id="modeToggle">
-        <span class="mode-indicator test"></span>
-        TEST MODE
+    <button class="mode-toggle production" id="modeToggle">
+        <span class="mode-indicator production"></span>
+        PRODUCTION MODE
     </button>
     
     <!-- Passcode Modal -->
@@ -609,7 +609,7 @@
         
         // ===== MODE TOGGLE LOGIC =====
         const CORRECT_PASSCODE = '4695';
-        let currentMode = 'test'; // Start in test mode
+        let currentMode = 'production'; // Start in PRODUCTION mode by default
         
         // Load saved mode from localStorage
         const savedMode = localStorage.getItem('appMode');
@@ -639,15 +639,15 @@
         }
         
         document.getElementById('modeToggle').addEventListener('click', function() {
-            // If trying to switch to production, require passcode
-            if (currentMode === 'test') {
+            // If trying to switch to test, require passcode
+            if (currentMode === 'production') {
                 document.getElementById('passcodeModal').classList.add('show');
                 document.getElementById('passcodeInput').focus();
             } else {
-                // Can switch back to test without passcode
-                currentMode = 'test';
-                localStorage.setItem('appMode', 'test');
-                syncModeWithBackend('test');
+                // Can switch back to production without passcode
+                currentMode = 'production';
+                localStorage.setItem('appMode', 'production');
+                syncModeWithBackend('production');
                 updateModeDisplay();
             }
         });
@@ -657,9 +657,9 @@
             const errorMsg = document.getElementById('passcodeInput').parentElement.querySelector('.error-text');
             
             if (passcode === CORRECT_PASSCODE) {
-                currentMode = 'production';
-                localStorage.setItem('appMode', 'production');
-                syncModeWithBackend('production');
+                currentMode = 'test';
+                localStorage.setItem('appMode', 'test');
+                syncModeWithBackend('test');
                 updateModeDisplay();
                 document.getElementById('passcodeModal').classList.remove('show');
                 document.getElementById('passcodeInput').value = '';
