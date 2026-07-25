@@ -230,6 +230,144 @@
         box-shadow: 0 2px 8px rgba(196, 30, 58, 0.1);
     }
         
+    .mode-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border: 2px solid #1a472a;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .mode-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    .mode-toggle.test {
+        background: #fff3cd;
+        border-color: #ffc107;
+        color: #856404;
+    }
+    
+    .mode-toggle.production {
+        background: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+    
+    .mode-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+    
+    .mode-indicator.test {
+        background: #ffc107;
+    }
+    
+    .mode-indicator.production {
+        background: #28a745;
+    }
+    
+    .passcode-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .passcode-modal.show {
+        display: flex;
+    }
+    
+    .passcode-modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        max-width: 400px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+    
+    .passcode-modal-content h2 {
+        color: #1a472a;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+    
+    .passcode-modal-content input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        text-align: center;
+        letter-spacing: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .passcode-modal-content input:focus {
+        outline: none;
+        border-color: #C41E3A;
+        box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.15);
+    }
+    
+    .passcode-modal-buttons {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .passcode-modal-buttons button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .passcode-submit {
+        background: #C41E3A;
+        color: white;
+    }
+    
+    .passcode-submit:hover {
+        background: #9B1630;
+    }
+    
+    .passcode-cancel {
+        background: #e0e0e0;
+        color: #333;
+    }
+    
+    .passcode-cancel:hover {
+        background: #d0d0d0;
+    }
+    
+    .error-text {
+        color: #C41E3A;
+        font-size: 12px;
+        margin-top: -15px;
+        margin-bottom: 15px;
+    }
+        
     @media (max-width: 640px) {
         .container {
             padding: 30px;
@@ -372,6 +510,25 @@
         </form>
     </div>
     
+    <!-- Mode Toggle Button -->
+    <button class="mode-toggle test" id="modeToggle">
+        <span class="mode-indicator test"></span>
+        TEST MODE
+    </button>
+    
+    <!-- Passcode Modal -->
+    <div class="passcode-modal" id="passcodeModal">
+        <div class="passcode-modal-content">
+            <h2>Enter Passcode</h2>
+            <input type="password" id="passcodeInput" placeholder="Enter 4-digit code" maxlength="4">
+            <div class="error-text" id="errorMsg" style="display: none;">Invalid passcode</div>
+            <div class="passcode-modal-buttons">
+                <button class="passcode-submit" id="passcodeSubmit">Confirm</button>
+                <button class="passcode-cancel" id="passcodeCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Set today's date as default for "Date Sold"
         document.getElementById('dateSold').valueAsDate = new Date();
@@ -449,6 +606,94 @@
                 }, 5000);
             }
         });
+        
+        // ===== MODE TOGGLE LOGIC =====
+        const CORRECT_PASSCODE = '4695';
+        let currentMode = 'test'; // Start in test mode
+        
+        // Load saved mode from localStorage
+        const savedMode = localStorage.getItem('appMode');
+        if (savedMode) {
+            currentMode = savedMode;
+            updateModeDisplay();
+        }
+        
+        function updateModeDisplay() {
+            const toggleBtn = document.getElementById('modeToggle');
+            const modeIndicator = toggleBtn.querySelector('.mode-indicator');
+            const modeText = toggleBtn.lastChild;
+            
+            if (currentMode === 'test') {
+                toggleBtn.classList.add('test');
+                toggleBtn.classList.remove('production');
+                modeIndicator.classList.add('test');
+                modeIndicator.classList.remove('production');
+                modeText.textContent = ' TEST MODE';
+            } else {
+                toggleBtn.classList.add('production');
+                toggleBtn.classList.remove('test');
+                modeIndicator.classList.add('production');
+                modeIndicator.classList.remove('test');
+                modeText.textContent = ' PRODUCTION MODE';
+            }
+        }
+        
+        document.getElementById('modeToggle').addEventListener('click', function() {
+            // If trying to switch to production, require passcode
+            if (currentMode === 'test') {
+                document.getElementById('passcodeModal').classList.add('show');
+                document.getElementById('passcodeInput').focus();
+            } else {
+                // Can switch back to test without passcode
+                currentMode = 'test';
+                localStorage.setItem('appMode', 'test');
+                syncModeWithBackend('test');
+                updateModeDisplay();
+            }
+        });
+        
+        document.getElementById('passcodeSubmit').addEventListener('click', function() {
+            const passcode = document.getElementById('passcodeInput').value;
+            const errorMsg = document.getElementById('passcodeInput').parentElement.querySelector('.error-text');
+            
+            if (passcode === CORRECT_PASSCODE) {
+                currentMode = 'production';
+                localStorage.setItem('appMode', 'production');
+                syncModeWithBackend('production');
+                updateModeDisplay();
+                document.getElementById('passcodeModal').classList.remove('show');
+                document.getElementById('passcodeInput').value = '';
+                errorMsg.style.display = 'none';
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('passcodeInput').value = '';
+                document.getElementById('passcodeInput').focus();
+            }
+        });
+        
+        document.getElementById('passcodeCancel').addEventListener('click', function() {
+            document.getElementById('passcodeModal').classList.remove('show');
+            document.getElementById('passcodeInput').value = '';
+            document.getElementById('passcodeInput').parentElement.querySelector('.error-text').style.display = 'none';
+        });
+        
+        // Allow Enter key to submit passcode
+        document.getElementById('passcodeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('passcodeSubmit').click();
+            }
+        });
+        
+        // Sync mode with backend
+        function syncModeWithBackend(mode) {
+            fetch('/mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ mode: mode })
+            }).catch(err => console.log('Mode sync note:', err));
+        }
     </script>
 </body>
 </html>

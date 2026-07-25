@@ -150,6 +150,35 @@ def health():
     """Health check"""
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()}), 200
 
+@app.route('/mode', methods=['GET', 'POST'])
+def handle_mode():
+    """Get or set the current mode (test/production)"""
+    global EQUIPMENT_RECIPIENTS
+    
+    if request.method == 'GET':
+        mode = os.environ.get('APP_MODE', 'test')
+        return jsonify({'mode': mode}), 200
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        mode = data.get('mode', 'test')
+        
+        if mode == 'production':
+            # Enable Johnstone emails
+            EQUIPMENT_RECIPIENTS = [
+                "cody.stough@johnstonesupply.com",
+                "keith.hartsell@johnstonesupply.com",
+                "zach.ward@johnstonesupply.com"
+            ]
+            print("✅ PRODUCTION MODE ENABLED - Johnstone emails will be sent")
+        else:
+            # Disable Johnstone emails
+            EQUIPMENT_RECIPIENTS = []
+            print("✅ TEST MODE ENABLED - Only sending to csperry@tbyrdhvac.com")
+        
+        os.environ['APP_MODE'] = mode
+        return jsonify({'status': 'ok', 'mode': mode}), 200
+
 if __name__ == '__main__':
     print("🚀 HVAC Pipeline Server Starting...")
     print(f"📧 Sender: {SENDER_EMAIL}")
