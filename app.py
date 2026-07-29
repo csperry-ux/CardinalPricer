@@ -63,12 +63,39 @@ def send_email(recipient, subject, body):
 
 @app.route('/')
 def serve_form():
-    """Serve the HTML form"""
+    """Serve the dashboard"""
     import os
-    form_path = os.path.join(os.path.dirname(__file__), 'index.html')
+    dashboard_path = os.path.join(os.path.dirname(__file__), 'dashboard.html')
+    if os.path.exists(dashboard_path):
+        return send_from_directory(os.path.dirname(__file__), 'dashboard.html')
+    return "Dashboard not found", 404
+
+@app.route('/job-entry-content')
+def serve_job_entry():
+    """Serve job entry form content"""
+    import os
+    form_path = os.path.join(os.path.dirname(__file__), 'hvac-form.html')
     if os.path.exists(form_path):
-        return send_from_directory(os.path.dirname(__file__), 'index.html')
+        return send_from_directory(os.path.dirname(__file__), 'hvac-form.html')
     return "Form not found", 404
+
+@app.route('/calculator-content')
+def serve_calculator():
+    """Serve duct calculator content"""
+    import os
+    calc_path = os.path.join(os.path.dirname(__file__), 'duct-calculator.html')
+    if os.path.exists(calc_path):
+        return send_from_directory(os.path.dirname(__file__), 'duct-calculator.html')
+    return "Calculator not found", 404
+
+@app.route('/pricer-content')
+def serve_pricer():
+    """Serve Cardinal Pricer app content"""
+    import os
+    pricer_path = os.path.join(os.path.dirname(__file__), 'pricer.html')
+    if os.path.exists(pricer_path):
+        return send_from_directory(os.path.dirname(__file__), 'pricer.html')
+    return "Pricer not found", 404
 
 @app.route('/tbyrd-logo.jpg')
 def serve_tbyrd_logo():
